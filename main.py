@@ -374,10 +374,18 @@ class GreenStreetRealty(BaseAgency):
         continue
     return apartments
 
+class Smith(BaseAgency):
+  url = 'https://smith.ua.rentmanager.com/Search_Result?command=Search_Result&template=rmwbAll&locations=default&mode=raw&propuserdef_showonweblk=Yes&unituserdef_ShowOnWeblk=Yes&orderby=aname&availabilitydate=12/31/2500&start=0&maxperpage=9999&rmwebsvc_page=1'
+  agency = "Smith Apartments"
+  def get_all(self):
+    properties = requests.get(detail_url).json()
+    # TODO: returned json does not have bedroom/bathroom info
+    return []
+
 '''
 TODO: 
 ramshaw - good: https://ramshaw.com/apartments-uiuc-campus/
-smith properties - good: https://smithapartments-cu.com/
+smith properties **in progress**
 bankier - good: https://www.bankierapartments.com/apartments
 university group - mid: https://ugroupcu.com/apartment-search/
 wampler - mid: https://wamplerapartments.com/
@@ -405,12 +413,19 @@ Individual = [
   MHM(),
   Smile(),
   Roland(),
-  GreenStreetRealty()
+  GreenStreetRealty(),
+  Smith(),
 ]
 
 AllAgencies = AppFolio + AmericanCampus + Individual
 
-for agency in AllAgencies:
-  apartments = agency.get_all()
-  for apartment in apartments:
-    print(apartment)
+def main():
+  for agency in AllAgencies:
+    apartments = agency.get_all()
+    for apartment in apartments:
+      print(apartment)
+
+
+if __name__ == '__main__':
+  # main()
+  Smith().get_all()
