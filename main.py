@@ -4,17 +4,17 @@ from abc import ABC, abstractmethod
 import re, json
 
 class Apartment:
-    def __init__(self, address, rent, bedrooms, bathrooms, link, availability, agency):
-        self.address = address
-        self.rent = rent
-        self.bedrooms = bedrooms
-        self.bathrooms = bathrooms
-        self.link = link
-        self.availability = availability
-        self.agency = agency
-    def __str__(self):
-        return f"'{self.address}' -- ${self.rent} {self.bedrooms}BED/{self.bathrooms}BATH {'available' if self.availability else 'unavailable'} {self.link}"
-    __repr__ = __str__
+  def __init__(self, address, rent, bedrooms, bathrooms, link, availability, agency):
+    self.address = address
+    self.rent = rent
+    self.bedrooms = bedrooms
+    self.bathrooms = bathrooms
+    self.link = link
+    self.availability = availability
+    self.agency = agency
+  def __str__(self):
+    return f"'{self.address}' -- ${self.rent} {self.bedrooms}BED/{self.bathrooms}BATH {'available' if self.availability else 'unavailable'} {self.link}"
+  __repr__ = __str__
 class BaseAgency(ABC):
   @abstractmethod
   def get_all(self):
