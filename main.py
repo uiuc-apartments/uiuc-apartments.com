@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 from abc import ABC, abstractmethod
@@ -229,26 +230,38 @@ class AppFolio(BaseAgency):
       else:
         bed = int(rawBed)
       bath = float(rawBath.split(' ')[0].strip())
-      available = lookup['Available'] != ''
+      available_date = lookup['Available'].strip().lower()
+      if available_date == 'now':
+        # current date as mm/dd/yy
+        available_date = datetime.now().strftime('%m/%d/%y')
+    
+      available = available_date != ''
+    
       apartments.append(Apartment(address, rent, bed, bath, link, available, self.agency))
     
     return apartments
     
 class CPM(AppFolio):
   def __init__(self):
-    url = 'https://campuspm.appfolio.com/listings?1667258359400'
+    url = 'https://campuspm.appfolio.com/listings'
     agency = "CPM"
     super().__init__(url, agency)
 
 class ChampaignCountyReality(AppFolio):
   def __init__(self):
-    url = 'https://ccr.appfolio.com/listings?1667264955192'
+    url = 'https://ccr.appfolio.com/listings'
     agency = "Champaign County Reality"
     super().__init__(url, agency)
 class Weiner(AppFolio):
   def __init__(self):
-    url = 'https://weinercompanies.appfolio.com/listings?1667264295027'
+    url = 'https://weinercompanies.appfolio.com/listings'
     agency = "Weiner Companies"
+    super().__init__(url, agency)
+
+class Ramshaw(AppFolio):
+  def __init__(self):
+    url = 'https://ram.appfolio.com/'
+    agency = "Ramshaw Real Estate"
     super().__init__(url, agency)
 
 class AmericanCampusCommunities(BaseAgency):
@@ -435,6 +448,156 @@ class Smith(BaseAgency):
       apartments.append(Apartment(address, rent, bed, bath, link, available, self.agency))
     return apartments
 
+class Bankier(BaseAgency):
+  url = 'https://www.bankierapartments.com/apartments/'
+  agency = "Bankier Properties"
+  def get_all(self):
+    res = requests.get(self.url).text
+    soup = BeautifulSoup(res, 'html.parser')
+    # Get all a tags with the title="View Property Units"
+    apartments = []
+    for a in soup.find_all('a', title='View Property Units'):
+      # Get the text of span with class="title" as the address
+      address = a.find('span', class_='title').text
+      # Get the bs4 soup of the link
+      link = self.url + a['href']
+      res = requests.get(link).text
+      soup = BeautifulSoup(res, 'html.parser')
+      # Get all a tags with the title="View Unit Details"
+      for a in soup.find_all('a', title='View Unit Details'):
+        # Get the bs4 soup of the link
+        link = self.url + a['href']
+        print(link)
+        res = requests.get(link).text
+        soup = BeautifulSoup(res, 'html.parser')
+        # Get the div with class="info"
+        info = soup.find('div', class_='info')
+        # Get the third h2 tag as the size
+        h2s = info.find_all('h2')
+        bed_bath = h2s[2].text
+        price = h2s[3].text
+        # Extract the price from the price text (use -1 to get upper bound)
+        rent = float(price.split('$')[-1].split('-')[-1].split(' ')[0].replace(',', '').replace('*',''))
+        # Extract the bed and bath from the bed_bath text using a regex
+        raw_bed = re.search(r'(?:(\d+) Bedrooms)|(Efficiency)\/', bed_bath)
+        raw_bath = re.search(r'\/(\d+) Baths', bed_bath)
+        if raw_bath:
+          bath = float(raw_bath.group(1))
+        else:
+          bath = 1
+        
+        bed = 1 if raw_bed.group(2) == 'Efficiency' else int(raw_bed.group(1))
+        apartments.append(Apartment(address, rent, bed, bath, link, True, self.agency))
+    return apartments
+
+class UniversityGroup(BaseAgency):
+  url = 'https://ugroupcu.com/wp-admin/admin-ajax.php'
+  agency = "University Group"
+  fall_2023_codes = [16]
+  def get_all(self):
+    page = 0
+    apartments = []
+    while True:
+      form_data = {
+        'group_no': page,
+        'action': 'apartment_detail',
+        'available_now': self.fall_2023_codes,
+        'random_order': 0,
+        'roommate_check': 'N'
+      }
+      res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'api-scraper'}, data=form_data).text
+      if res.strip() == 'No properties listed.':
+        break
+      soup = BeautifulSoup(res, 'html.parser')
+      # Get all links with class="more_detail"
+      for a in soup.find_all('a', class_='more_detail'):
+        # Get the bs4 soup of the link
+        link = a['href']
+        res = requests.get(link + '/', headers={'user-agent': 'api-scraper'}).text
+        soup = BeautifulSoup(res, 'html.parser')
+        # Get the first h2 tag under the div with class prop_detil_rgt
+        address = soup.find('div', class_='prop_detil_rgt').find('h2').text
+        # Get the div with id="tab-1"
+        info = soup.find('div', id='tab-1')
+        kinds = info.find_all('div', class_='tab-content_in_wrapp')
+        for kind in kinds:
+          lookup = {}
+          # For each li tag with 2 divs underneath, build the lookup
+          for li in kind.find('div', class_='tab-content_in_rgt').find_all('li'):
+            divs = li.find_all('div')
+            lookup[divs[0].text.strip()] = divs[1].text.strip()
+          
+          price = float(lookup['Price per month:'].replace('$', '').replace(',', ''))
+          bathrooms = float(lookup.get('Bathrooms:', 0))
+          availability = lookup['Availability:'].upper()
+          available = availability == 'AVAILABLE AUGUST 2023'
+          # bedrooms as the h4 tag with class="propert_head"
+          # extract a number from the text with regex
+          bedrooms_text = kind.find('h4', class_='propert_head').text.strip()
+          if 'studio' in bedrooms_text.lower():
+            bedrooms = 1
+          else:
+            bedrooms = int(re.search(r'(\d+)', bedrooms_text).group(1))
+          apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+
+      page += 1
+    return apartments
+
+class Wampler(BaseAgency):
+  url = 'https://wamplerapartments.com/?availability=august'
+  agency = "Wampler Apartments"
+  def get_all(self):
+    apartments = []
+    # Get all links with class="more-link"
+    res = requests.get(self.url).text
+    soup = BeautifulSoup(res, 'html.parser')
+    for a in soup.find_all('a', class_='more-link'):
+      # Get soup
+      link = a['href']
+      res = requests.get(link).text
+      soup = BeautifulSoup(res, 'html.parser')
+      # Get h3 with class="listing-address"
+      address = soup.find('h3', class_='listing-address').text.strip()
+      lookup = {}
+      # Get all div with class="single-detail" with the key as span class="label" and value as span class="value"
+      for div in soup.find_all('div', class_='single-detail'):
+        spans = div.find_all('span')
+        lookup[spans[0].text.strip()] = spans[1].text.strip()
+      if lookup['Bedrooms:'] == 'Studio':
+        bedrooms = 1
+      else:
+        bedrooms = int(lookup['Bedrooms:'])
+      bathrooms = float(lookup['Bathrooms:'])
+      available = lookup['Rent:'].upper() != 'LEASED'
+      if available:
+        price = float(lookup['Rent:'].replace('$', '').replace(',', ''))
+      else:
+        price = 0
+      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+    return apartments
+
+class JSJ(BaseAgency):
+  url = 'https://jsjmanagement.com/on-campus'
+  agency = "JSJ Management"
+  def get_all(self):
+    apartments = []
+    res = requests.get(self.url).text
+    soup = BeautifulSoup(res, 'html.parser')
+    # Get script with type="application/json" and id="search-form-config"
+    script = soup.find('script', type='application/json', id='search-form-config').text
+    data = json.loads(script)
+    for property in data['properties']['data']:
+      bedrooms = int(property['bedrooms'])
+      bathrooms = float(property['bathrooms'])
+      address = property['address_1']
+      link = 'https://jsjmanagement.com/on-campus/listing/' + property['slug']
+      price = float(property['price'].replace(',', ''))
+      avail_date = property['avail_date']
+      # If avail_date is later than 08-01-2023, then available
+      available = datetime.strptime(avail_date, '%m-%d-%Y') > datetime.strptime('08-01-2023', '%m-%d-%Y')
+      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+    return apartments
+
 '''
 TODO: 
 ramshaw - good: https://ramshaw.com/apartments-uiuc-campus/
@@ -452,6 +615,7 @@ AppFolio = [
   CPM(),
   Weiner(),
   ChampaignCountyReality(),
+  Ramshaw(),
 ]
 
 AmericanCampus = [
@@ -468,6 +632,10 @@ Individual = [
   Roland(),
   GreenStreetRealty(),
   Smith(),
+  Bankier(),
+  UniversityGroup(),
+  Wampler(),
+  JSJ()
 ]
 
 AllAgencies = AppFolio + AmericanCampus + Individual
@@ -480,4 +648,5 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+  print(JSJ().get_all())
+
