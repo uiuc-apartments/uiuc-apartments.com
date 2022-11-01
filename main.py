@@ -32,17 +32,25 @@ class JSM(BaseAgency):
     # Loop through each article and get the data we want
     for article in articles:
       # Get the address as the a link with the hreflang="en" attribute
-      address = article.find('a', hreflang='en').text
+      address = article.find('a', hreflang='en').text.strip()
       # Get the link as the a link with the class="call-to-action" attribute
-      link = article.find('a', class_='call-to-action')['href']
+      link = self.url + article.find('a', class_='call-to-action')['href']
       # Get the first div with class="unit__card-rent"
-      rent = article.find('div', class_='unit__card-rent').text
+      # Get upper price range
+      rent = article.find('div', class_='unit__card-rent').text.split('RENT:')[1].split('-')[-1].replace('$','').strip()
+      if rent == 'No Units Available':
+        rent = 0
+        available = False
+      else:
+        rent = int(rent)
+        available = True
+
       # Get the text of the p tag under the div with class="unit__card-bedrooms"
-      bedrooms = article.find('div', class_='unit__card-bedrooms').find('p').text
+      bedrooms = int(article.find('div', class_='unit__card-bedrooms').find('p').text.split(' ')[0])
       # Get the text of the p tag under the div with class="unit__card-bathrooms"
-      bathrooms = article.find('div', class_='unit__card-bathrooms').find('p').text
+      bathrooms = float(article.find('div', class_='unit__card-bathrooms').find('p').text.split(' ')[0])
       # Get the text of the p tag under the div with class="unit__card-availability"
-      available = article.find('div', class_='unit__card-availability').find('p').text != ''
+      # available = article.find('div', class_='unit__card-availability').text != ''
       # Add an apartment to the list
       apartments.append(Apartment(address, rent, bedrooms, bathrooms, link, available, self.agency))
     
@@ -95,7 +103,9 @@ class Smile(BaseAgency):
   agency = "Smile"
   def get_all(self):
     apartments = []
-    contents = requests.get(self.url).json()
+    # request with user agent
+
+    contents = requests.get(self.url, headers={'User-Agent': 'api-scraper'}).json()
     apartment_list = json.loads(contents['value'])
     for apartment in apartment_list:
       details = apartment['data']
@@ -103,9 +113,11 @@ class Smile(BaseAgency):
       available = details['available']
       bathrooms = details['bathrooms']
       bedrooms = details['bedrooms']
-      market_rent = details['market_rent']
+      # Studio
+      if bedrooms == 0:
+        bedrooms == 1
+      market_rent = int(details['market_rent'])
       link = "https://www.smilestudentliving.com/listings/detail/" + apartment['page_item_url']
-      available = apartment['available']
       apartments.append(Apartment(address, market_rent, bedrooms, bathrooms, link, available, self.agency))
     
     return apartments
@@ -183,9 +195,13 @@ class Roland(BaseAgency):
       apartments.append(Apartment(address, rent, int(bedrooms), 0, url, available, self.agency))
        
     return apartments
-class CPM(BaseAgency):
-  url = 'https://campuspm.appfolio.com/listings?1667258359400'
-  agency = "CPM"
+  
+class AppFolio(BaseAgency):
+  def __init__(self, url, agency):
+    self.url = url
+    self.base_url = url.split('/listings')[0]
+    self.agency = agency
+    super().__init__()
   def get_all(self):
     apartments = []
     contents = requests.get(self.url).text
@@ -203,24 +219,51 @@ class CPM(BaseAgency):
       # get span with js-listing-address
       address = div.find('span', class_='js-listing-address').text
       # get link href with class js-link-to-detail
-      link = div.find('a', class_='js-link-to-detail')['href']
+      link = self.base_url + div.find('a', target="_blank")['href']
 
       rent = int(lookup['RENT'].replace('$', '').replace(',', ''))
-      [rawBed, rawBath] = lookup['Bed / Bath'].split('/')
-      bed = int(rawBed.strip())
-      bath = float(rawBath.strip())
-      available = lookup['Availability'] != ''
+      [rawBed, rawBath] = lookup['Bed / Bath'].split('/ ')
+      rawBed = rawBed.split(' ')[0].strip()
+      if rawBed == 'Studio':
+        bed = 1
+      else:
+        bed = int(rawBed)
+      bath = float(rawBath.split(' ')[0].strip())
+      available = lookup['Available'] != ''
       apartments.append(Apartment(address, rent, bed, bath, link, available, self.agency))
     
     return apartments
+    
+class CPM(AppFolio):
+  def __init__(self):
+    url = 'https://campuspm.appfolio.com/listings?1667258359400'
+    agency = "CPM"
+    super().__init__(url, agency)
 
-class CampustownRentals(BaseAgency):
-  url = 'https://www.americancampus.com/api/nextgen/term/'
-  agency = "Campustown Rentals"
-  fall_term = '3a653d6c-fd95-4f30-bd85-c1188f637598'
+class ChampaignCountyReality(AppFolio):
+  def __init__(self):
+    url = 'https://ccr.appfolio.com/listings?1667264955192'
+    agency = "Champaign County Reality"
+    super().__init__(url, agency)
+class Weiner(AppFolio):
+  def __init__(self):
+    url = 'https://weinercompanies.appfolio.com/listings?1667264295027'
+    agency = "Weiner Companies"
+    super().__init__(url, agency)
+
+class AmericanCampusCommunities(BaseAgency):
+  def __init__(self, url, agency, fall_term, address=None):
+    self.url = url
+    self.api_url = 'https://www.americancampus.com/api/nextgen/'
+    self.base_url = url.split('/listings')[0]
+    self.agency = agency
+    self.fall_term = fall_term
+    self.address = address
+    super().__init__()
   def get_all(self):
     apartments = []
-    contents = requests.get(self.url + self.fall_term).json()
+    print(self.api_url + self.fall_term)
+    contents = requests.get(self.api_url + self.fall_term).json()
     location_lookup = {}
     for filter in contents['Filters']:
       if filter["Label"] != "Location":
@@ -230,12 +273,12 @@ class CampustownRentals(BaseAgency):
         location_lookup[value["ID"]] = value["Text"]
     for apartment in contents['Attributes']:
       price = apartment["MinPrice"]
-      location = None
+      location = self.address
       for filter, list in apartment["Filters"].items():
-        if filter == "Location":
+        if filter == "Location" and location_lookup != {}:
           location = location_lookup[list[0]]
           break
-      print(apartment['Title'])
+      # print(apartment['Title'])
       try:
         [_, raw_bed, raw_bath] = apartment['Title'].split(' - ')
         bed_regex = re.compile(r'(\d+) Bed')
@@ -248,26 +291,63 @@ class CampustownRentals(BaseAgency):
       detail_url = 'https://www.americancampus.com' + apartment['DetailUrl']
       details = requests.get(detail_url).json()
       slug = details['UrlSlug']
-      link = 'https://www.americancampus.com/student-apartments/il/champaign/campustown-rentals/floor-plans#/detail/' + slug
+      link = self.url + slug
       rent = price * bed
       apartments.append(Apartment(location, rent, bed, bath, link, True, self.agency))
     return apartments
+class CampustownRentals(AmericanCampusCommunities):
+  url = 'https://www.americancampus.com/student-apartments/il/champaign/campustown-rentals/floor-plans#/detail/'
+  agency = "Campustown Rentals"
+  fall_term = 'term/3a653d6c-fd95-4f30-bd85-c1188f637598'
+  def __init__(self):
+    super().__init__(self.url, self.agency, self.fall_term)
+
+class Green309(AmericanCampusCommunities):
+  url = 'https://www.americancampus.com/student-apartments/il/champaign/309-green/floor-plans#/detail/'
+  agency = "Green 309"
+  fall_term = 'term/1b950fa7-661c-4b3f-a23c-b4e111ffca30'
+  address = '309 Green'
+  def __init__(self):
+    super().__init__(self.url, self.agency, self.fall_term, self.address)
+
+class TowerAtThird(AmericanCampusCommunities):
+  url = 'https://www.americancampus.com/student-apartments/il/champaign/tower-at-3rd/floor-plans#/detail/'
+  agency = "Tower at Third"
+  fall_term = 'term/d8b37712-193a-42f5-b416-b4f6a23d6a3e'
+  address = 'Tower at Third'
+  def __init__(self):
+    super().__init__(self.url, self.agency, self.fall_term, self.address)
+
+class Lofts54(AmericanCampusCommunities):
+  url = 'https://www.americancampus.com/student-apartments/il/champaign/lofts54/floor-plans#/detail/'
+  agency = "Lofts 54"
+  fall_term = 'term/280fcf82-6d95-42b9-9ed3-ec9f6decd476'
+  address = 'Lofts 54 address'
+  def __init__(self):
+    super().__init__(self.url, self.agency, self.fall_term, self.address)
+class SuitesAtThird(AmericanCampusCommunities):
+  url = 'https://www.americancampus.com/student-apartments/il/champaign/the-suites-at-3rd/floor-plans#/detail/'
+  agency = "Suites at Third"
+  fall_term = 'term/0d3da1dc-3c4a-44e9-996e-bf8b9001bf5f'
+  address = 'Suites at Third address'
+  def __init__(self):
+    super().__init__(self.url, self.agency, self.fall_term, self.address)
 
 class GreenStreetRealty(BaseAgency):
   url = 'https://www.greenstrealty.com/modules/extended/propertySearch'
   agency = "Green Street Realty"
   terms = ['Available August 2023']
   def get_all(self):
-    res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded'}, data={'query': self.terms, 'show_map': False}).text
+    res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded'}, data={'query': '/'.join(self.terms), 'show_map': False}).text
     soup = BeautifulSoup(res, 'html.parser') 
     apartments = []
     # get all divs with class property-item-data
     for div in soup.find_all('div', class_='property-item-data'):
       # get all divs with class property-item-data
       try:
-        address = div.find('div', class_='property-item-title').text.replace('\n',', ').replace('\t','').strip()
+        address = div.find('div', class_='property-item-title').text.replace('\n',', ').replace('\t','').strip()[2:]
         link = 'https://www.greenstrealty.com' + div.find('a', class_='cms-btn cms-btn-primary')['href']
-        print(address)
+        # print(address)
         kinds = div.find_all('div', class_='property-item-info')
         for kind in kinds:
           # print(kind.text)
@@ -293,3 +373,44 @@ class GreenStreetRealty(BaseAgency):
       except ValueError:
         continue
     return apartments
+
+'''
+TODO: 
+ramshaw - good: https://ramshaw.com/apartments-uiuc-campus/
+smith properties - good: https://smithapartments-cu.com/
+bankier - good: https://www.bankierapartments.com/apartments
+university group - mid: https://ugroupcu.com/apartment-search/
+wampler - mid: https://wamplerapartments.com/
+JSJ - mid : https://jsjmanagement.com/on-campus/query/bedrooms/any/bathrooms/any/types/any/price/any
+Illini Tower - hard to scrape: https://www.illinitoweruiuc.com/floor-plans/2-bedroom/
+Latitude - pricy: https://www.livelatitude.com/champaign/latitude/student/
+here/707/octave - no public pricing
+Bailey - small https://baileyapartments.com/apartment/
+'''
+AppFolio = [
+  CPM(),
+  Weiner(),
+  ChampaignCountyReality(),
+]
+
+AmericanCampus = [
+  CampustownRentals(),
+  Green309(),
+  TowerAtThird(),
+  Lofts54(),
+  SuitesAtThird(),
+]
+Individual = [
+  JSM(),
+  MHM(),
+  Smile(),
+  Roland(),
+  GreenStreetRealty()
+]
+
+AllAgencies = AppFolio + AmericanCampus + Individual
+
+for agency in AllAgencies:
+  apartments = agency.get_all()
+  for apartment in apartments:
+    print(apartment)
