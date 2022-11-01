@@ -598,6 +598,31 @@ class JSJ(BaseAgency):
       apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
     return apartments
 
+class Bailey(BaseAgency):
+    url = 'https://baileyapartments.com/amenities/'
+    agency = "Bailey Apartments"
+    def get_all(self):
+        apartments = []
+        res = requests.get(self.url).text
+        soup = BeautifulSoup(res, 'html.parser')
+        # Get each row in the table with class="tablepress-2", using thead as dictionary keys
+        table = soup.find('table', id='tablepress-2')
+        thead = table.find('thead')
+        keys = [th.text.strip() for th in thead.find_all('th')]
+        for tr in table.find('tbody').find_all('tr'):
+            lookup = {}
+            for i, td in enumerate(tr.find_all('td')):
+                lookup[keys[i]] = td.text.strip()
+            address = lookup['Building']
+            # normalize the address into a url slug
+            slug = address.lower().replace(' ', '-').replace('.', '').replace(',', '')
+            bedrooms = int(lookup['# of Bedrooms']) if lookup['# of Bedrooms'] != 'Efficiency' else 1
+            bathrooms = float(lookup['# of Baths'])
+            price = float(lookup['Price (per month)'].split(' - ')[-1].replace('$', '').replace(',', ''))
+            link = 'https://baileyapartments.com/apartment/' + slug
+            available = lookup['Availability (AVAILABLE 2023-2024)'] == 'Available'
+            apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+        return apartments
 '''
 TODO: 
 ramshaw - good: https://ramshaw.com/apartments-uiuc-campus/
@@ -635,7 +660,8 @@ Individual = [
   Bankier(),
   UniversityGroup(),
   Wampler(),
-  JSJ()
+  JSJ(),
+  Bailey()
 ]
 
 AllAgencies = AppFolio + AmericanCampus + Individual
@@ -648,5 +674,5 @@ def main():
 
 
 if __name__ == '__main__':
-  print(JSJ().get_all())
+  print(Bailey().get_all())
 
