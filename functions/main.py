@@ -7,30 +7,18 @@ import datetime
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 
-# Depending on which database you are using, you'll set some variables differently.
-# In this code we are inserting only one field with one value.
-# Feel free to change the insert statement as needed for your own table's requirements.
+from api import AllAgencies
 
-# Uncomment and set the following variables depending on your specific instance and database:
 connection_name = "champaign-apartment-aggregator:us-central1:champaign-apartment-postgresql"
 table_name = "apartments"
-#table_field_value = ""
 db_name = "postgres"
 db_user = "postgres"
 db_password = "postgres"
-
-# If your database is MySQL, uncomment the following two lines:
-#driver_name = 'mysql+pymysql'
-#query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
 
 # If your database is PostgreSQL, uncomment the following two lines:
 driver_name = 'postgresql+pg8000'
 query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
-# If the type of your table_field value is a string, surround it with double quotes.
-# Connect to sql database with sqlalchemy. If there is not a database with the name 'postgres', create one. If there is not a table with the name 'apartments', create one with the fields
-# address: string, rent: float, bedrooms: int, bathrooms: float, link: string, available_date: string, agency: string, is_studio: boolean
-# If there is a table with the name 'apartments', insert the values from the request into the table.
 Base = declarative_base()
 class Apartments(Base):
     __tablename__ = 'apartments'
@@ -60,21 +48,26 @@ def insert_apartment(request):
     )
     # Create table is not exists
     Base.metadata.create_all(db, checkfirst=True)
-        
-    default_values = {
-        'address': '123 test st',
-        'rent': 2000.0,
-        'bedrooms': 3,
-        'bathrooms': 2.5,
-        'link': 'https://www.google.com',
-        'available_date': '2021-01-01',
-        'agency': 'Swag',
-        'is_studio': False
-    }
+
+    # Get all new Apartments
+    all_agencies = AllAgencies
+    all_apartments = []
+    for agency in all_agencies:
+        all_apartments.extend(agency.get_all())
+
+
     try:
         session = sqlalchemy.orm.Session(db)
-        apartment = Apartments(**default_values)
-        session.add(apartment)
+
+        # Delete all Apartments
+        session.query(Apartments).delete()
+
+        # Insert all Apartments
+        for apt in all_apartments:
+            apartment = Apartments(address=apt.address, rent=apt.rent, bedrooms=apt.bedrooms, bathrooms=apt.bathrooms, link=apt.link, available_date=apt.available_date, agency=apt.agency, is_studio=apt.is_studio)
+            session.add(apartment)
+        
+        # Commit Changes
         session.commit()
     except Exception as e:
         return 'Error: {}'.format(str(e))
