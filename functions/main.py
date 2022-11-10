@@ -5,6 +5,7 @@ import datetime
 
 # This file contains all the code used in the codelab.
 import sqlalchemy
+from sqlalchemy.ext.declarative import declarative_base
 
 # Depending on which database you are using, you'll set some variables differently.
 # In this code we are inserting only one field with one value.
@@ -12,8 +13,7 @@ import sqlalchemy
 
 # Uncomment and set the following variables depending on your specific instance and database:
 connection_name = "champaign-apartment-aggregator:us-central1:champaign-apartment-postgresql"
-table_name = "testing1"
-table_field = "testingtime"
+table_name = "apartments"
 #table_field_value = ""
 db_name = "postgres"
 db_user = "postgres"
@@ -24,15 +24,27 @@ db_password = "postgres"
 #query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
 
 # If your database is PostgreSQL, uncomment the following two lines:
-driver_name = 'postgres+pg8000'
+driver_name = 'postgresql+pg8000'
 query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
 # If the type of your table_field value is a string, surround it with double quotes.
+# Connect to sql database with sqlalchemy. If there is not a database with the name 'postgres', create one. If there is not a table with the name 'apartments', create one with the fields
+# address: string, rent: float, bedrooms: int, bathrooms: float, link: string, available_date: string, agency: string, is_studio: boolean
+# If there is a table with the name 'apartments', insert the values from the request into the table.
+Base = declarative_base()
+class Apartments(Base):
+    __tablename__ = 'apartments'
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    address = sqlalchemy.Column(sqlalchemy.String)
+    rent = sqlalchemy.Column(sqlalchemy.Float)
+    bedrooms = sqlalchemy.Column(sqlalchemy.Integer)
+    bathrooms = sqlalchemy.Column(sqlalchemy.Float)
+    link = sqlalchemy.Column(sqlalchemy.String)
+    available_date = sqlalchemy.Column(sqlalchemy.String)
+    agency = sqlalchemy.Column(sqlalchemy.String)
+    is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
 
-def insert():
-    table_field_value = str(datetime.datetime.now())
-    stmt = sqlalchemy.text('insert into {} ({}) values ({})'.format(table_name, table_field, table_field_value))
-
+def insert_apartment(request):
     db = sqlalchemy.create_engine(
       sqlalchemy.engine.url.URL(
         drivername=driver_name,
@@ -46,13 +58,28 @@ def insert():
       pool_timeout=30,
       pool_recycle=1800
     )
+    # Create table is not exists
+    Base.metadata.create_all(db, checkfirst=True)
+        
+    default_values = {
+        'address': '123 test st',
+        'rent': 2000.0,
+        'bedrooms': 3,
+        'bathrooms': 2.5,
+        'link': 'https://www.google.com',
+        'available_date': '2021-01-01',
+        'agency': 'Swag',
+        'is_studio': False
+    }
     try:
-        with db.connect() as conn:
-            conn.execute(stmt)
+        session = sqlalchemy.orm.Session(db)
+        apartment = Apartments(**default_values)
+        session.add(apartment)
+        session.commit()
     except Exception as e:
         return 'Error: {}'.format(str(e))
-    return 'ok'
 
+    return 'ok'
 @functions_framework.http
 def hello_get(request):
     """HTTP Cloud Function.
@@ -68,4 +95,4 @@ def hello_get(request):
         Functions, see the `Writing HTTP functions` page.
         <https://cloud.google.com/functions/docs/writing/http#http_frameworks>
     """
-    return insert()
+    return insert_apartment(request)

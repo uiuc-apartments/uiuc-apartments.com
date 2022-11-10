@@ -7,4 +7,5 @@ gcloud functions deploy python-http-function \
     --source=. \
     --entry-point=hello_get \
     --trigger-http \
-    --allow-unauthenticated
+    --allow-unauthenticated \
+    --project=champaign-apartment-aggregator
