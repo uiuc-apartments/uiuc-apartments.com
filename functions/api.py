@@ -67,8 +67,9 @@ class MHM(BaseAgency):
   agency = "MHM"
   def get_all(self):
     apartments = []
-    page = requests.get(self.url).text
+    page = requests.get(self.url, headers={'User-Agent': 'api-scraper'}).text
     soup = BeautifulSoup(page, 'html.parser')
+    # print(page)
     # Get all divs with class="propgridc"
     locations = soup.find_all('div', class_='propgridc')
     # Loop through each location
@@ -80,8 +81,9 @@ class MHM(BaseAgency):
       # Get all p tags with class="ppricebox"
       ps = location.find_all('p', class_='ppricebox')
       for p in ps:
+        print(p.text)
         # A regex to capture the word optional word bath followed by a number
-        regex = re.compile(r'(?P<bed>\d+) Bed(?:\/(?P<bath>[\d\.]+) Bath)?.*:(?:.*\$(?P<rent>\d+,?\d+)\/(?P<kind>\w+)|.*(?P<available>LEASED!))')
+        regex = re.compile(r'(?P<bed>\d+) Bed(?:\/(?P<bath>[\d\.]+) Bath)?.*:(?:.*\$(?P<rent>\d+,?\d+)\W{1,2}?(?P<kind>\w+)|.*(?P<available>LEASED!))')
         # Use regex against p tag
         match = regex.search(p.text)
         # If there is a match
@@ -91,7 +93,11 @@ class MHM(BaseAgency):
           # Get the number of bathrooms
           bathrooms = float(match.group('bath') or 1)
           # Get the rent
-          rent = int(match.group('rent').replace(',','') or -1)
+          rent = match.group('rent')
+          if rent:
+            rent = int(rent.replace(',',''))
+          else:
+            rent = 0
           # Get the kind of unit
           kind = match.group('kind')
           if kind == 'person':
@@ -706,5 +712,5 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+  print(MHM().get_all())
 
