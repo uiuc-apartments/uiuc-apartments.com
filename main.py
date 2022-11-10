@@ -5,16 +5,17 @@ from abc import ABC, abstractmethod
 import re, json
 
 class Apartment:
-  def __init__(self, address, rent, bedrooms, bathrooms, link, availability, agency):
+  def __init__(self, address, rent, bedrooms, bathrooms, link, available_date, agency, is_studio):
     self.address = address
     self.rent = rent
     self.bedrooms = bedrooms
     self.bathrooms = bathrooms
     self.link = link
-    self.availability = availability
+    self.available_date = available_date
     self.agency = agency
+    self.is_studio = is_studio
   def __str__(self):
-    return f"'{self.address}' -- ${self.rent} {self.bedrooms}BED/{self.bathrooms}BATH {'available' if self.availability else 'unavailable'} {self.link}"
+    return f"'{self.address}' -- ${self.rent} {self.bedrooms}BED/{self.bathrooms}BATH {self.available_date} {self.link}"
   __repr__ = __str__
 class BaseAgency(ABC):
   @abstractmethod
@@ -41,19 +42,23 @@ class JSM(BaseAgency):
       rent = article.find('div', class_='unit__card-rent').text.split('RENT:')[1].split('-')[-1].replace('$','').strip()
       if rent == 'No Units Available':
         rent = 0
-        available = False
+        available_date = None
       else:
         rent = int(rent)
-        available = True
+        available_date = '2021-01-01'
 
       # Get the text of the p tag under the div with class="unit__card-bedrooms"
       bedrooms = int(article.find('div', class_='unit__card-bedrooms').find('p').text.split(' ')[0])
+      is_studio = False
+      if bedrooms == 0:
+        is_studio = True
+        bedrooms = 1
       # Get the text of the p tag under the div with class="unit__card-bathrooms"
       bathrooms = float(article.find('div', class_='unit__card-bathrooms').find('p').text.split(' ')[0])
       # Get the text of the p tag under the div with class="unit__card-availability"
       # available = article.find('div', class_='unit__card-availability').text != ''
       # Add an apartment to the list
-      apartments.append(Apartment(address, rent, bedrooms, bathrooms, link, available, self.agency))
+      apartments.append(Apartment(address, rent, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
     
     return apartments
   
@@ -92,10 +97,15 @@ class MHM(BaseAgency):
           if kind == 'person':
             rent *= bedrooms
           # Get the availability
-          availability = match.group('available')
-          available = availability != 'LEASED!'
+          availabile = match.group('available') != 'LEASED!'
+          if availabile:
+            available_date = '2023-08-01'
+          else:
+            available_date = None
+          
+          is_studio = False
           # Add an apartment to the list
-          apartments.append(Apartment(address, rent, bedrooms, bathrooms, link, available, self.agency))
+          apartments.append(Apartment(address, rent, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
     
     return apartments
 
@@ -111,15 +121,17 @@ class Smile(BaseAgency):
     for apartment in apartment_list:
       details = apartment['data']
       address = details['address_address1']
-      available = details['available']
+      available_date = details.get('available_date', None)
       bathrooms = details['bathrooms']
       bedrooms = details['bedrooms']
       # Studio
+      is_studio = False
       if bedrooms == 0:
         bedrooms == 1
+        is_studio = True
       market_rent = int(details['market_rent'])
       link = "https://www.smilestudentliving.com/listings/detail/" + apartment['page_item_url']
-      apartments.append(Apartment(address, market_rent, bedrooms, bathrooms, link, available, self.agency))
+      apartments.append(Apartment(address, market_rent, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
     
     return apartments
 
@@ -141,17 +153,19 @@ class Roland(BaseAgency):
     for li in lis:
       bedrooms = li.find('span', class_='wsite-menu-title').text
       bedroom_regex = re.compile(r'(\d+)\+? Bedroom')
+      is_studio = False
       try:
         match = bedroom_regex.search(bedrooms).group(1)
       except AttributeError:
         match = '1'
+        is_studio = True
       # Get the ul with class="wsite-menu"
       ul = li.find('ul', class_='wsite-menu')
       # get the link of every a element with class='wsite-menu-subitem'
       for a in ul.find_all('a', class_='wsite-menu-subitem'):
-        allLinks.append([a['href'], match])
+        allLinks.append([a['href'], match, is_studio])
     
-    for [link, fallback_bedrooms] in allLinks:
+    for [link, fallback_bedrooms, is_studio] in allLinks:
       url = self.url + link
       page = requests.get(url).text
       soup = BeautifulSoup(page, 'html.parser')
@@ -159,8 +173,9 @@ class Roland(BaseAgency):
       root = soup.find('div', id='wsite-content')
       address = root.find('h2', class_='wsite-content-title').text
       status = root.find('blockquote').text.lower()
-      available = 'leased' not in status
-      
+      available_date = None
+      if 'leased' not in status:
+        available_date = '2023-08-01'
       # Find next div of blockquote with no class and a child div with class="wsite-multicol"
       table = None
       start = root.find('blockquote')
@@ -193,7 +208,7 @@ class Roland(BaseAgency):
       rent = max([int(price) for price in prices])
       rent *= int(bedrooms)
 
-      apartments.append(Apartment(address, rent, int(bedrooms), 0, url, available, self.agency))
+      apartments.append(Apartment(address, rent, int(bedrooms), 0, url, available_date, self.agency, is_studio))
        
     return apartments
   
@@ -226,18 +241,18 @@ class AppFolio(BaseAgency):
       [rawBed, rawBath] = lookup['Bed / Bath'].split('/ ')
       rawBed = rawBed.split(' ')[0].strip()
       if rawBed == 'Studio':
+        is_studio = True
         bed = 1
       else:
+        is_studio = False
         bed = int(rawBed)
       bath = float(rawBath.split(' ')[0].strip())
       available_date = lookup['Available'].strip().lower()
       if available_date == 'now':
         # current date as mm/dd/yy
         available_date = datetime.now().strftime('%m/%d/%y')
-    
-      available = available_date != ''
-    
-      apartments.append(Apartment(address, rent, bed, bath, link, available, self.agency))
+        
+      apartments.append(Apartment(address, rent, bed, bath, link, available_date, self.agency, is_studio))
     
     return apartments
     
@@ -275,7 +290,7 @@ class AmericanCampusCommunities(BaseAgency):
     super().__init__()
   def get_all(self):
     apartments = []
-    print(self.api_url + self.fall_term)
+    # print(self.api_url + self.fall_term)
     contents = requests.get(self.api_url + self.fall_term).json()
     location_lookup = {}
     for filter in contents['Filters']:
@@ -292,21 +307,25 @@ class AmericanCampusCommunities(BaseAgency):
           location = location_lookup[list[0]]
           break
       # print(apartment['Title'])
+      is_studio = False
       try:
         [_, raw_bed, raw_bath] = apartment['Title'].split(' - ')
         bed_regex = re.compile(r'(\d+) Bed')
-        bath_regex = re.compile(r'([\d\.]+) Bath')
         bed = int(bed_regex.search(raw_bed).group(1))
+        bath_regex = re.compile(r'([\d\.]+) Bath')
         bath = float(bath_regex.search(raw_bath).group(1))
       except ValueError:
+        is_studio = True
         bed = 1
         bath = 1
+
       detail_url = 'https://www.americancampus.com' + apartment['DetailUrl']
       details = requests.get(detail_url).json()
       slug = details['UrlSlug']
       link = self.url + slug
       rent = price * bed
-      apartments.append(Apartment(location, rent, bed, bath, link, True, self.agency))
+      available_date = '2023-08-01'
+      apartments.append(Apartment(location, rent, bed, bath, link, available_date, self.agency, is_studio))
     return apartments
 class CampustownRentals(AmericanCampusCommunities):
   url = 'https://www.americancampus.com/student-apartments/il/champaign/campustown-rentals/floor-plans#/detail/'
@@ -319,7 +338,7 @@ class Green309(AmericanCampusCommunities):
   url = 'https://www.americancampus.com/student-apartments/il/champaign/309-green/floor-plans#/detail/'
   agency = "Green 309"
   fall_term = 'term/1b950fa7-661c-4b3f-a23c-b4e111ffca30'
-  address = '309 Green'
+  address = '309 Green St'
   def __init__(self):
     super().__init__(self.url, self.agency, self.fall_term, self.address)
 
@@ -327,7 +346,7 @@ class TowerAtThird(AmericanCampusCommunities):
   url = 'https://www.americancampus.com/student-apartments/il/champaign/tower-at-3rd/floor-plans#/detail/'
   agency = "Tower at Third"
   fall_term = 'term/d8b37712-193a-42f5-b416-b4f6a23d6a3e'
-  address = 'Tower at Third'
+  address = ' 302 E John St'
   def __init__(self):
     super().__init__(self.url, self.agency, self.fall_term, self.address)
 
@@ -335,14 +354,14 @@ class Lofts54(AmericanCampusCommunities):
   url = 'https://www.americancampus.com/student-apartments/il/champaign/lofts54/floor-plans#/detail/'
   agency = "Lofts 54"
   fall_term = 'term/280fcf82-6d95-42b9-9ed3-ec9f6decd476'
-  address = 'Lofts 54 address'
+  address = '309 E Green St'
   def __init__(self):
     super().__init__(self.url, self.agency, self.fall_term, self.address)
 class SuitesAtThird(AmericanCampusCommunities):
   url = 'https://www.americancampus.com/student-apartments/il/champaign/the-suites-at-3rd/floor-plans#/detail/'
   agency = "Suites at Third"
   fall_term = 'term/0d3da1dc-3c4a-44e9-996e-bf8b9001bf5f'
-  address = 'Suites at Third address'
+  address = '707 S 3rd St'
   def __init__(self):
     super().__init__(self.url, self.agency, self.fall_term, self.address)
 
@@ -364,9 +383,11 @@ class GreenStreetRealty(BaseAgency):
         kinds = div.find_all('div', class_='property-item-info')
         for kind in kinds:
           # print(kind.text)
+          is_studio = False
           try:
             raw_bed_txt = kind.find('div', class_='beds').text.lower()
             if 'studio' in raw_bed_txt:
+              is_studio = True
               bed = 1
             else:
               bed = int(raw_bed_txt.split(' ')[0])
@@ -382,7 +403,9 @@ class GreenStreetRealty(BaseAgency):
           price = int(raw_price.replace('$', '').replace(',', ''))
           rent = price * multiplier
 
-          apartments.append(Apartment(address, rent, bed, bath, link, True, self.agency))
+          available_date = '2023-08-01'
+
+          apartments.append(Apartment(address, rent, bed, bath, link, available_date, self.agency, is_studio))
       except ValueError:
         continue
     return apartments
@@ -390,7 +413,6 @@ class GreenStreetRealty(BaseAgency):
 class Smith(BaseAgency):
   url = 'https://smith.ua.rentmanager.com/Search_Result?command=Search_Result&template=rmwbDefault&locations=1&mode=raw&propuserdef_showonweblk=Yes&orderby=aname&availabilitydate=12/31/2500&start=0&maxperpage=9999&rmwebsvc_page=1'
   agency = "Smith Apartments"
-  available_when = [('8', '2023')] # tuple of month and year
 
   def clean_json(self, raw):
     """
@@ -436,16 +458,12 @@ class Smith(BaseAgency):
       rent = float(unit['marketrent'].replace(',', '').replace('$', ''))
       bed = float(prop['bedrooms'])
       bath = float(prop['bathrooms'])
+      is_studio = False
       link = 'https://smithapartments-cu.com/property-details/?pid=' + prop['ppid']
 
-      available = False
       date_str = unit['availableDate']
-      for (month, year) in self.available_when:
-        # date string is formatted as "mm/dd/yyyy"
-        if date_str.startswith(month + '/') and date_str.endswith('/' + year):
-          available = True
 
-      apartments.append(Apartment(address, rent, bed, bath, link, available, self.agency))
+      apartments.append(Apartment(address, rent, bed, bath, link, date_str, self.agency, is_studio))
     return apartments
 
 class Bankier(BaseAgency):
@@ -467,7 +485,7 @@ class Bankier(BaseAgency):
       for a in soup.find_all('a', title='View Unit Details'):
         # Get the bs4 soup of the link
         link = self.url + a['href']
-        print(link)
+        # print(link)
         res = requests.get(link).text
         soup = BeautifulSoup(res, 'html.parser')
         # Get the div with class="info"
@@ -485,9 +503,15 @@ class Bankier(BaseAgency):
           bath = float(raw_bath.group(1))
         else:
           bath = 1
+        if raw_bed.group(2) == 'Efficiency':
+          is_studio = True
+          bed = 1
+        else:
+          is_studio = False
+          bed = int(raw_bed.group(1))
         
-        bed = 1 if raw_bed.group(2) == 'Efficiency' else int(raw_bed.group(1))
-        apartments.append(Apartment(address, rent, bed, bath, link, True, self.agency))
+        available_date = '2023-08-01'
+        apartments.append(Apartment(address, rent, bed, bath, link, available_date, self.agency, is_studio))
     return apartments
 
 class UniversityGroup(BaseAgency):
@@ -506,7 +530,7 @@ class UniversityGroup(BaseAgency):
         'roommate_check': 'N'
       }
       res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'api-scraper'}, data=form_data).text
-      if res.strip() == 'No properties listed.':
+      if res.strip() == 'No properties listed.' or '500 Error' in res:
         break
       soup = BeautifulSoup(res, 'html.parser')
       # Get all links with class="more_detail"
@@ -516,6 +540,8 @@ class UniversityGroup(BaseAgency):
         res = requests.get(link + '/', headers={'user-agent': 'api-scraper'}).text
         soup = BeautifulSoup(res, 'html.parser')
         # Get the first h2 tag under the div with class prop_detil_rgt
+        # print('====', link)
+        # print(res)
         address = soup.find('div', class_='prop_detil_rgt').find('h2').text
         # Get the div with id="tab-1"
         info = soup.find('div', id='tab-1')
@@ -530,15 +556,20 @@ class UniversityGroup(BaseAgency):
           price = float(lookup['Price per month:'].replace('$', '').replace(',', ''))
           bathrooms = float(lookup.get('Bathrooms:', 0))
           availability = lookup['Availability:'].upper()
-          available = availability == 'AVAILABLE AUGUST 2023'
+          available_date = '2023-08-01' if availability == 'AVAILABLE AUGUST 2023' else None
           # bedrooms as the h4 tag with class="propert_head"
           # extract a number from the text with regex
           bedrooms_text = kind.find('h4', class_='propert_head').text.strip()
           if 'studio' in bedrooms_text.lower():
+            is_studio = True
             bedrooms = 1
           else:
-            bedrooms = int(re.search(r'(\d+)', bedrooms_text).group(1))
-          apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+            is_studio = False
+            try:
+              bedrooms = int(re.search(r'(\d+)', bedrooms_text).group(1))
+            except AttributeError:
+              bedrooms = 0
+          apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
 
       page += 1
     return apartments
@@ -565,15 +596,19 @@ class Wampler(BaseAgency):
         lookup[spans[0].text.strip()] = spans[1].text.strip()
       if lookup['Bedrooms:'] == 'Studio':
         bedrooms = 1
+        is_studio = True
       else:
         bedrooms = int(lookup['Bedrooms:'])
+        is_studio = False
       bathrooms = float(lookup['Bathrooms:'])
       available = lookup['Rent:'].upper() != 'LEASED'
       if available:
+        available_date = '2023-08-01'
         price = float(lookup['Rent:'].replace('$', '').replace(',', ''))
       else:
+        available_date = None
         price = 0
-      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
     return apartments
 
 class JSJ(BaseAgency):
@@ -588,14 +623,18 @@ class JSJ(BaseAgency):
     data = json.loads(script)
     for property in data['properties']['data']:
       bedrooms = int(property['bedrooms'])
+      if bedrooms == 0:
+        bedrooms = 1
+        is_studio = True
+      else:
+        is_studio = False
       bathrooms = float(property['bathrooms'])
       address = property['address_1']
       link = 'https://jsjmanagement.com/on-campus/listing/' + property['slug']
       price = float(property['price'].replace(',', ''))
       avail_date = property['avail_date']
       # If avail_date is later than 08-01-2023, then available
-      available = datetime.strptime(avail_date, '%m-%d-%Y') > datetime.strptime('08-01-2023', '%m-%d-%Y')
-      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+      apartments.append(Apartment(address, price, bedrooms, bathrooms, link, avail_date, self.agency, is_studio))
     return apartments
 
 class Bailey(BaseAgency):
@@ -616,26 +655,19 @@ class Bailey(BaseAgency):
             address = lookup['Building']
             # normalize the address into a url slug
             slug = address.lower().replace(' ', '-').replace('.', '').replace(',', '')
-            bedrooms = int(lookup['# of Bedrooms']) if lookup['# of Bedrooms'] != 'Efficiency' else 1
+            if lookup['# of Bedrooms'] != 'Efficiency':
+              bedrooms = int(lookup['# of Bedrooms'])
+              is_studio = False
+            else:
+              bedrooms = 1
+              is_studio = True
             bathrooms = float(lookup['# of Baths'])
             price = float(lookup['Price (per month)'].split(' - ')[-1].replace('$', '').replace(',', ''))
             link = 'https://baileyapartments.com/apartment/' + slug
-            available = lookup['Availability (AVAILABLE 2023-2024)'] == 'Available'
-            apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available, self.agency))
+            available_date = '2023-08-01' if lookup['Availability (AVAILABLE 2023-2024)'] == 'Available' else None
+            apartments.append(Apartment(address, price, bedrooms, bathrooms, link, available_date, self.agency, is_studio))
         return apartments
-'''
-TODO: 
-ramshaw - good: https://ramshaw.com/apartments-uiuc-campus/
-smith properties **in progress**
-bankier - good: https://www.bankierapartments.com/apartments
-university group - mid: https://ugroupcu.com/apartment-search/
-wampler - mid: https://wamplerapartments.com/
-JSJ - mid : https://jsjmanagement.com/on-campus/query/bedrooms/any/bathrooms/any/types/any/price/any
-Illini Tower - hard to scrape: https://www.illinitoweruiuc.com/floor-plans/2-bedroom/
-Latitude - pricy: https://www.livelatitude.com/champaign/latitude/student/
-here/707/octave - no public pricing
-Bailey - small https://baileyapartments.com/apartment/
-'''
+
 AppFolio = [
   CPM(),
   Weiner(),
@@ -658,10 +690,10 @@ Individual = [
   GreenStreetRealty(),
   Smith(),
   Bankier(),
-  UniversityGroup(),
   Wampler(),
   JSJ(),
-  Bailey()
+  Bailey(),
+  UniversityGroup()
 ]
 
 AllAgencies = AppFolio + AmericanCampus + Individual
@@ -674,5 +706,5 @@ def main():
 
 
 if __name__ == '__main__':
-  print(Bailey().get_all())
+  main()
 
