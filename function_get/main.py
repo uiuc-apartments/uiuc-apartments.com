@@ -1,6 +1,6 @@
 import functions_framework
 import datetime
-
+from api import AllAgencies
 # This file contains all the code used in the codelab.
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
@@ -46,12 +46,40 @@ def get_apartments(request):
   )
 
   try:
-      session = sqlalchemy.orm.Session(db)
-      # get apartments with agency in request
-      apartments = session.query(Apartments).filter(Apartments.agency == request.args.get('agency')).all()
-      # convert apartments to json
-      apartments_json = [apartment.__dict__ for apartment in apartments]
-      return apartments_json
+    all_agencies = [agency().name for agency in AllAgencies]
+    agencies = request.args.get('agencies', all_agencies).split(',')
+
+    min_rent = request.args.get('min_rent', 0)
+    max_rent = request.args.get('max_rent', 9999)
+
+    min_bedrooms = request.args.get('min_bedrooms', 0)
+    max_bedrooms = request.args.get('max_bedrooms', 9999)
+
+    min_bathrooms = request.args.get('min_bathrooms', 0)
+    max_bathrooms = request.args.get('max_bathrooms', 9999)
+
+    earliest_available_date = request.args.get('earliest_available_date', '1900-01-01')
+    latest_available_date = request.args.get('latest_available_date', '9999-12-31')
+
+    is_studio = request.args.get('is_studio', False)
+
+    session = sqlalchemy.orm.Session(db)
+    
+    # get apartments with agency in request
+    apartments = session.query(Apartments) \
+      .filter(Apartments.agency.in_(agencies)) \
+      .filter(Apartments.rent >= min_rent) \
+      .filter(Apartments.rent <= max_rent) \
+      .filter(Apartments.bedrooms >= min_bedrooms) \
+      .filter(Apartments.bedrooms <= max_bedrooms) \
+      .filter(Apartments.bathrooms >= min_bathrooms) \
+      .filter(Apartments.bathrooms <= max_bathrooms) \
+      .filter(Apartments.is_studio == is_studio) \
+      .filter(Apartments.available_date >= earliest_available_date) \
+      .filter(Apartments.available_date <= latest_available_date) \
+    # convert apartments to json
+    apartments_json = [apartment.__dict__ for apartment in apartments]
+    return apartments_json
   except Exception as e:
       print(e)
       return "Error"
