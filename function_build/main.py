@@ -28,7 +28,7 @@ class Apartments(Base):
     bedrooms = sqlalchemy.Column(sqlalchemy.Integer)
     bathrooms = sqlalchemy.Column(sqlalchemy.Float)
     link = sqlalchemy.Column(sqlalchemy.String)
-    available_date = sqlalchemy.Column(sqlalchemy.String)
+    available_date = sqlalchemy.Column(sqlalchemy.Date)
     agency = sqlalchemy.Column(sqlalchemy.String)
     is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
 
