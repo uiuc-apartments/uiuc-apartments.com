@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 import functions_framework
-import datetime
 
 # This file contains all the code used in the codelab.
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 
-from api import AllAgencies
+from uiuc_apartments import AllAgencies
 
 connection_name = "champaign-apartment-aggregator:us-central1:champaign-apartment-postgresql"
 table_name = "apartments"
@@ -32,7 +31,7 @@ class Apartments(Base):
     agency = sqlalchemy.Column(sqlalchemy.String)
     is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
 
-def insert_apartment(request):
+def insert_apartment(_):
     db = sqlalchemy.create_engine(
       sqlalchemy.engine.url.URL(
         drivername=driver_name,

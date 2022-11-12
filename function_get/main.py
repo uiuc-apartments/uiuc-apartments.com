@@ -1,8 +1,7 @@
 import functions_framework
 from flask import jsonify
-import datetime
 from dataclasses import dataclass
-from api import AllAgencies
+from uiuc_apartments import AllAgencies
 # This file contains all the code used in the codelab.
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
@@ -59,7 +58,7 @@ def get_apartments(request):
     )
 
     try:
-        all_agencies = [agency.agency for agency in AllAgencies]
+        all_agencies = [agency.name for agency in AllAgencies]
         agencies = request.args.get('agencies')
         agencies = agencies.split(',') if agencies else all_agencies
 
