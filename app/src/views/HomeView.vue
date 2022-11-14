@@ -1,7 +1,20 @@
 <script module="es2015" lang="ts">
 import ApartmentCard from '../components/ApartmentCard.vue'
-import { onMounted } from 'vue'
+import { onMounted, type Ref } from 'vue'
 import { ref } from 'vue'
+
+// TODO: probably a good idea to move this somewhere else
+interface Apartment {
+  address: string,
+  agency: string,
+  available_date: string,
+  bathrooms: number,
+  bedrooms: number,
+  id: number,
+  is_studio: boolean,
+  link: string,
+  rent: number
+}
 
 export default {
   data() {
@@ -13,15 +26,16 @@ export default {
     ApartmentCard,
   },
   setup() {
-    const data = ref([])
+    const data: Ref<Array<Apartment>> = ref([])
     const loading = ref(true)
     const error = ref(null)
 
     onMounted(async () => {
+      console.log(import.meta.env)
       try {
-        const response = await fetch('/api/search')
+        const response = await fetch(import.meta.env.VITE_FUNCTION_URL)
         data.value = await response.json()
-      } catch (err) {
+      } catch (err: any) {
         error.value = err.message
       } finally {
         loading.value = false
