@@ -43,6 +43,19 @@ class Apartments(Base):
 
 @functions_framework.http
 def get_apartments(request):
+
+    if request.method == 'OPTIONS':
+        # Allows GET requests from any origin with the Content-Type
+        # header and caches preflight response for an 3600s
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '3600'
+        }
+
+        return ('', 204, headers)
+
     db = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL(
         drivername=driver_name,
@@ -93,7 +106,13 @@ def get_apartments(request):
         # convert apartments to json
         results = query.all()
         print(results[:10])
-        return jsonify(results)
+
+        # Set CORS headers for the main request
+        headers = {
+            'Access-Control-Allow-Origin': '*'
+        }
+
+        return jsonify(results), 200, headers
     except Exception as e:
         print(e)
         return "Error"
