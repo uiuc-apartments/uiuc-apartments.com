@@ -1,5 +1,6 @@
 <script module="es2015" lang="ts">
 import ApartmentCard from '../components/ApartmentCard.vue'
+import Map from '../components/Map.vue'
 import { onMounted, type Ref } from 'vue'
 import { ref } from 'vue'
 
@@ -24,6 +25,7 @@ export default {
   },
   components: {
     ApartmentCard,
+    Map,
   },
   setup() {
     const data: Ref<Array<Apartment>> = ref([])
@@ -61,5 +63,6 @@ export default {
         :apartment="apartment"
       />
     </div>
+    <Map/>
   </main>
 </template>
