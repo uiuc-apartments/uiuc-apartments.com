@@ -1,11 +1,33 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import router from "./router";
+import { createApp } from 'vue'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import vuetify from './plugins/vuetify'
+import {
+  faBath,
+  faBed,
+  faHome,
+  faSignHanging,
+  faLocationPin,
+  faDollarSign,
+} from '@fortawesome/free-solid-svg-icons'
 
-import "./assets/main.css";
+import Datepicker from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
-const app = createApp(App);
+import App from './App.vue'
+import router from './router'
 
-app.use(router);
+import './assets/main.css'
+import './index.css'
 
-app.mount("#app");
+library.add(faBath, faBed, faHome, faSignHanging, faLocationPin, faDollarSign)
+
+const app = createApp(App)
+
+app
+  .use(router)
+  .use(vuetify)
+  .component('font-awesome-icon', FontAwesomeIcon)
+  .component('Datepicker', Datepicker)
+
+app.mount('#app')
