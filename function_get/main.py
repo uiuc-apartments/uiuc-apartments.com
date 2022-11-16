@@ -29,6 +29,8 @@ class Apartments(Base):
     available_date: str
     agency: str
     is_studio: bool
+    latitude: float
+    longitude: float
 
     __tablename__ = 'apartments'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -40,6 +42,8 @@ class Apartments(Base):
     available_date = sqlalchemy.Column(sqlalchemy.Date)
     agency = sqlalchemy.Column(sqlalchemy.String)
     is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
+    latitude = sqlalchemy.Column(sqlalchemy.Float)
+    longitude = sqlalchemy.Column(sqlalchemy.Float)
 
 @functions_framework.http
 def get_apartments(request):
@@ -105,7 +109,7 @@ def get_apartments(request):
         .filter(Apartments.available_date <= latest_available_date)
         # convert apartments to json
         results = query.all()
-        print(results[:10])
+        print(results[14:17])
 
         # Set CORS headers for the main request
         headers = {

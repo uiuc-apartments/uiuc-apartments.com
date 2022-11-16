@@ -6,6 +6,10 @@ import functions_framework
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 
+import os
+import urllib
+import requests
+
 from uiuc_apartments import AllAgencies
 
 connection_name = "champaign-apartment-aggregator:us-central1:champaign-apartment-postgresql"
@@ -30,6 +34,29 @@ class Apartments(Base):
     available_date = sqlalchemy.Column(sqlalchemy.Date)
     agency = sqlalchemy.Column(sqlalchemy.String)
     is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
+    latitude = sqlalchemy.Column(sqlalchemy.Float)
+    longitude = sqlalchemy.Column(sqlalchemy.Float)
+
+def get_lat_long(address):
+    API_KEY = os.environ.get("API_KEY", "XXXX")
+    uiuc_min_long = -88.5
+    uiuc_max_long = -88
+    uiuc_min_lat = 40
+    uiuc_max_lat = 40.3
+    uiuc_center_long = -88.2
+    uiuc_center_lat = 40.1
+    address = urllib.parse.quote(address)
+    request_url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{address}.json?country=us&bbox=\
+{uiuc_min_long},{uiuc_max_long},{uiuc_min_lat},{uiuc_max_lat}&proximity={uiuc_center_long},{uiuc_center_lat}&limit=1&types=address&autocomplete=false&\
+fuzzyMatch=true&routing=false&worldview=us&access_token={API_KEY}"
+    response = requests.get(request_url)
+    if response.status_code != 200:
+        return (0, 0)
+    response = response.json()
+    if 'features' in response and len(response['features']) > 0:
+        return response['features'][0]['center']
+    # TODO: could not find the address, so don't commit it to database?
+    return (0, 0) 
 
 def insert_apartment(_):
     db = sqlalchemy.create_engine(
@@ -62,8 +89,12 @@ def insert_apartment(_):
         session.query(Apartments).delete()
 
         # Insert all Apartments
-        for apt in all_apartments:
-            apartment = Apartments(address=apt.address, rent=apt.rent, bedrooms=apt.bedrooms, bathrooms=apt.bathrooms, link=apt.link, available_date=apt.available_date, agency=apt.agency, is_studio=apt.is_studio)
+        import tqdm
+        for apt in tqdm.tqdm(all_apartments):
+            lat, long = get_lat_long(apt.address)
+            apartment = Apartments(address=apt.address, rent=apt.rent, bedrooms=apt.bedrooms, bathrooms=apt.bathrooms,
+                link=apt.link, available_date=apt.available_date, agency=apt.agency, is_studio=apt.is_studio,
+                latitude=lat, longitude=long)
             session.add(apartment)
         
         # Commit Changes
