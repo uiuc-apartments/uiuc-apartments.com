@@ -1,21 +1,36 @@
 <script lang="ts">
+import type { Apartment } from '../types'
 export default {
-  props: ['apartment'],
+  props: {
+    apartment: {
+      type: Object as () => Apartment,
+      required: true,
+    },
+  },
+  computed: {
+    pricePerPerson(): number {
+      return this.apartment.rent / this.apartment.bedrooms
+    },
+  },
 }
 </script>
 <template>
-  <div
-    class="p-6 max-w-sm bg-white rounded-lg border border-gray-200 shadow-md dark:bg-gray-800 dark:border-gray-700"
-  >
-    <a href="#">
-      <h5
-        class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
-      >
-        {{apartment.location}}
-      </h5>
-    </a>
-    <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">
-      {{apartment.address}}
-    </p>
+  <!-- apartment card with bedrooms bathrooms agency, rent, location with link to apartment using tailwind css -->
+  <div class="rounded bg-teal-400 m-5 p-5">
+    <div>
+      <font-awesome-icon icon="sign-hanging" /> {{ apartment.agency }}
+      <font-awesome-icon icon="location-pin" /> {{ apartment.address }}
+    </div>
+    <div>
+      <div v-if="apartment.is_studio">
+        <font-awesome-icon icon="bed" /> Studio
+      </div>
+      <div v-else>
+        <font-awesome-icon icon="bed" /> {{ apartment.bedrooms }}
+        <font-awesome-icon icon="bath" /> {{ apartment.bathrooms }}
+      </div>
+      <font-awesome-icon icon="dollar-sign" /> {{ apartment.rent }}
+      {{ apartment.available_date }}
+    </div>
   </div>
 </template>

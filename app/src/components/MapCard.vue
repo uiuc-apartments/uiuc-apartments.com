@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 import leaflet from 'leaflet'
 export default {
   data() {
@@ -28,7 +28,7 @@ export default {
 </template>
 
 <style>
- #map {
+#map {
   height: 300px;
- }
+}
 </style>

@@ -1,34 +1,29 @@
 <script module="es2015" lang="ts">
 import ApartmentCard from '../components/ApartmentCard.vue'
-import Map from '../components/Map.vue'
+import MapCard from '../components/MapCard.vue'
+import FilterControls from '../components/FilterControls.vue'
 import { onMounted, type Ref } from 'vue'
 import { ref } from 'vue'
-
-// TODO: probably a good idea to move this somewhere else
-interface Apartment {
-  address: string,
-  agency: string,
-  available_date: string,
-  bathrooms: number,
-  bedrooms: number,
-  id: number,
-  is_studio: boolean,
-  link: string,
-  rent: number
-}
+import type { Apartment, Filter } from '../types'
 
 export default {
-  data() {
-    return {
-      apartments: [],
-    }
-  },
   components: {
     ApartmentCard,
-    Map,
+    FilterControls,
+    MapCard,
+  },
+  computed: {
+    agencies(): Array<string> {
+      return [
+        ...new Set(
+          this.allApartments.map((apartment: Apartment) => apartment.agency)
+        ),
+      ]
+    },
   },
   setup() {
-    const data: Ref<Array<Apartment>> = ref([])
+    const allApartments: Ref<Array<Apartment>> = ref([])
+    const filteredApartments: Ref<Array<Apartment>> = ref([])
     const loading = ref(true)
     const error = ref(null)
 
@@ -36,7 +31,7 @@ export default {
       console.log(import.meta.env)
       try {
         const response = await fetch(import.meta.env.VITE_FUNCTION_URL)
-        data.value = await response.json()
+        allApartments.value = await response.json()
       } catch (err: any) {
         error.value = err.message
       } finally {
@@ -45,10 +40,34 @@ export default {
     })
 
     return {
-      data,
+      allApartments,
+      filteredApartments,
       loading,
       error,
     }
+  },
+  methods: {
+    filterApartments(filter: Filter) {
+      console.log('received event', filter)
+      this.filteredApartments = this.allApartments
+        .filter((apartment) => {
+          return (
+            apartment.bedrooms >= filter.minBedrooms &&
+            apartment.bedrooms <= filter.maxBedrooms &&
+            apartment.bathrooms >= filter.minBathrooms &&
+            apartment.bathrooms <= filter.maxBathrooms &&
+            apartment.rent >= filter.minRent &&
+            apartment.rent <= filter.maxRent &&
+            filter.selectedAgencies.includes(apartment.agency)
+          )
+        })
+        .filter((apartment) => {
+          return filter.dateRange?.length == 2
+            ? new Date(apartment.available_date) >= filter.dateRange[0] &&
+                new Date(apartment.available_date) <= filter.dateRange[1]
+            : true
+        })
+    },
   },
 }
 </script>
@@ -56,13 +75,23 @@ export default {
 <template>
   <main>
     <h1 class="text-4xl font-bold text-center">Apartments</h1>
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <ApartmentCard
-        v-for="apartment in data"
-        :key="apartment.id"
-        :apartment="apartment"
-      />
+    <div class="grid grid-cols-4 gap-4 mt-4">
+      <div class="col-span-1">
+        <FilterControls
+          :agencies="agencies"
+          @filter-apartments="filterApartments"
+        />
+      </div>
+      <div class="col-span-2">
+        <MapCard :apartments="filteredApartments" />
+      </div>
+      <div class="col-span-1">
+        <ApartmentCard
+          v-for="apartment in filteredApartments"
+          :key="apartment.id"
+          :apartment="apartment"
+        />
+      </div>
     </div>
-    <Map/>
   </main>
 </template>
