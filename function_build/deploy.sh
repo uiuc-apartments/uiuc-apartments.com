@@ -8,4 +8,6 @@ gcloud functions deploy build-apartments \
     --entry-point=build_apartments \
     --trigger-http \
     --allow-unauthenticated \
+    --timeout=900 \
+    --set-env-vars "API_KEY=$API_KEY" \
     --project=champaign-apartment-aggregator

@@ -15,7 +15,6 @@ db_password = "postgres"
 
 # If your database is PostgreSQL, uncomment the following two lines:
 driver_name = 'postgresql+pg8000'
-query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
 Base = declarative_base()
 @dataclass
@@ -66,7 +65,6 @@ def get_apartments(request):
         username=db_user,
         password=db_password,
         database=db_name,
-        query=query_string,
         ),
         pool_size=5,
         max_overflow=2,

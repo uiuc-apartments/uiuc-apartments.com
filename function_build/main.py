@@ -20,7 +20,6 @@ db_password = "postgres"
 
 # If your database is PostgreSQL, uncomment the following two lines:
 driver_name = 'postgresql+pg8000'
-query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
 Base = declarative_base()
 class Apartments(Base):
@@ -65,7 +64,6 @@ def insert_apartment(_):
         username=db_user,
         password=db_password,
         database=db_name,
-        query=query_string,
       ),
       pool_size=5,
       max_overflow=2,
@@ -89,8 +87,7 @@ def insert_apartment(_):
         session.query(Apartments).delete()
 
         # Insert all Apartments
-        import tqdm
-        for apt in tqdm.tqdm(all_apartments):
+        for apt in all_apartments:
             lat, long = get_lat_long(apt.address)
             apartment = Apartments(address=apt.address, rent=apt.rent, bedrooms=apt.bedrooms, bathrooms=apt.bathrooms,
                 link=apt.link, available_date=apt.available_date, agency=apt.agency, is_studio=apt.is_studio,
