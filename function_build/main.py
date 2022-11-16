@@ -20,6 +20,7 @@ db_password = "postgres"
 
 # If your database is PostgreSQL, uncomment the following two lines:
 driver_name = 'postgresql+pg8000'
+query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
 Base = declarative_base()
 class Apartments(Base):
@@ -64,6 +65,7 @@ def insert_apartment(_):
         username=db_user,
         password=db_password,
         database=db_name,
+        query=query_string,
       ),
       pool_size=5,
       max_overflow=2,
@@ -100,7 +102,7 @@ def insert_apartment(_):
         return 'Error: {}'.format(str(e))
 
     return 'ok'
-
+    
 @functions_framework.http
 def build_apartments(request):
     return insert_apartment(request)
