@@ -105,8 +105,8 @@ def get_apartments(request):
         .filter(Apartments.bathrooms >= min_bathrooms) \
         .filter(Apartments.bathrooms <= max_bathrooms) \
         .filter(Apartments.is_studio == is_studio) \
-        .filter(Apartments.available_date >= earliest_available_date) \
-        .filter(Apartments.available_date <= latest_available_date)
+        # .filter(Apartments.available_date >= earliest_available_date) \
+        # .filter(Apartments.available_date <= latest_available_date)
         # convert apartments to json
         results = query.all()
         print(results[14:17])
