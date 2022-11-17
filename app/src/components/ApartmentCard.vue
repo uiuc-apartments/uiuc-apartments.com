@@ -31,6 +31,7 @@ export default {
       </div>
       <font-awesome-icon icon="dollar-sign" /> {{ apartment.rent }}
       {{ apartment.available_date }}
+      {{ apartment.latitude }}, {{ apartment.longitude }}
     </div>
   </div>
 </template>

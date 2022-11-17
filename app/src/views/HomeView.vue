@@ -6,6 +6,14 @@ import { onMounted, type Ref } from 'vue'
 import { ref } from 'vue'
 import type { Apartment, Filter } from '../types'
 
+function dateIsBetween(date: Date, start: Date, end: Date) {
+  // create new date without the time component
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+  return d >= s && d <= e
+}
+
 export default {
   components: {
     ApartmentCard,
@@ -30,7 +38,7 @@ export default {
     onMounted(async () => {
       console.log(import.meta.env)
       try {
-        const response = await fetch(import.meta.env.VITE_FUNCTION_URL)
+        const response = await fetch(import.meta.env.VITE_DATA_ENDPOINT_URL)
         allApartments.value = await response.json()
       } catch (err: any) {
         error.value = err.message
@@ -62,9 +70,13 @@ export default {
           )
         })
         .filter((apartment) => {
-          return filter.dateRange?.length == 2
-            ? new Date(apartment.available_date) >= filter.dateRange[0] &&
-                new Date(apartment.available_date) <= filter.dateRange[1]
+          return typeof apartment.availableDate === 'string' && filter.dateRange?.length == 2
+            ? dateIsBetween(
+              // remove timezone from date
+                new Date(apartment.availableDate.replace(' 00:00:00 GMT', '')),
+                filter.dateRange[0],
+                filter.dateRange[1]
+              )
             : true
         })
     },

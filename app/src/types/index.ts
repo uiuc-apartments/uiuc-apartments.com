@@ -8,6 +8,8 @@ export interface Apartment {
   is_studio: boolean
   link: string
   rent: number
+  latitude: number
+  longitude: number
 }
 
 export type Filter = {
