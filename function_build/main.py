@@ -65,7 +65,7 @@ def insert_apartment(_):
         username=db_user,
         password=db_password,
         database=db_name,
-        query=query_string,
+        #query=query_string,
       ),
       pool_size=5,
       max_overflow=2,

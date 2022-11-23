@@ -64,10 +64,10 @@ export default {
       .setView([40.109, -88.227], 13) // illini union
     // add tile layers
     leaflet
-      .tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      .tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=yvUGw3ndr6zJmLiXqkDi', {
         maxZoom: 18,
         attribution:
-          '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
       })
       .addTo(map)
   },
