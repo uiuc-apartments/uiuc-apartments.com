@@ -70,10 +70,10 @@ export default {
           )
         })
         .filter((apartment) => {
-          return typeof apartment.availableDate === 'string' && filter.dateRange?.length == 2
+          return typeof apartment.available_date === 'string' && filter.dateRange?.length == 2
             ? dateIsBetween(
               // remove timezone from date
-                new Date(apartment.availableDate.replace(' 00:00:00 GMT', '')),
+                new Date(apartment.available_date.replace(' 00:00:00 GMT', '')),
                 filter.dateRange[0],
                 filter.dateRange[1]
               )
@@ -86,18 +86,18 @@ export default {
 
 <template>
   <main>
-    <h1 class="text-4xl font-bold text-center">Apartments</h1>
-    <div class="grid grid-cols-4 gap-4 mt-4">
-      <div class="col-span-1">
+    <h1 class="my-8 text-4xl font-bold text-center">Apartments</h1>
+    <div class="md:grid md:grid-cols-2 lg:grid-cols-4 mt-4">
+      <div class="col-span-1 mx-4">
         <FilterControls
           :agencies="agencies"
           @filter-apartments="filterApartments"
         />
       </div>
-      <div class="col-span-2">
+      <div class="col-span-2 m-4">
         <MapCard :apartments="filteredApartments" />
       </div>
-      <div class="col-span-1">
+      <div class="col-span-1 mx-4">
         <ApartmentCard
           v-for="apartment in filteredApartments"
           :key="apartment.id"

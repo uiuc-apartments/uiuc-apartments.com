@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import vuetify from './plugins/vuetify'
 import {
   faBath,
   faBed,
@@ -26,7 +25,6 @@ const app = createApp(App)
 
 app
   .use(router)
-  .use(vuetify)
   .component('font-awesome-icon', FontAwesomeIcon)
   .component('Datepicker', Datepicker)
 
