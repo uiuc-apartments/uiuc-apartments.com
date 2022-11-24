@@ -4,4 +4,4 @@ google-cloud-error-reporting==1.6.0
 
 SQLAlchemy==1.3.12
 pg8000==1.13.2
-uiuc-apartments==0.0.5
+uiuc-apartments==0.0.6
