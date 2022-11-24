@@ -66,7 +66,7 @@ def get_apartments(request):
         username=db_user,
         password=db_password,
         database=db_name,
-        #query=query_string,
+        query=query_string,
         ),
         pool_size=5,
         max_overflow=2,
@@ -115,6 +115,7 @@ def get_apartments(request):
         headers = {
             'Access-Control-Allow-Origin': '*'
         }
+        session.close()
 
         return jsonify(results), 200, headers
     except Exception as e:
