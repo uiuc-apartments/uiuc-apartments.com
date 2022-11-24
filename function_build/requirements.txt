@@ -2,3 +2,5 @@ functions-framework==3.2.0
 flask==2.1.0
 google-cloud-error-reporting==1.6.0
 google-cloud-firestore==2.7.2
+requests
+bs4
