@@ -1,4 +1,10 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
+if [[ -z "${API_KEY}" ]]; then
+  echo "API_KEY not set"
+  exit 1
+fi
+
 
 gcloud functions deploy build-apartments \
     --gen2 \
