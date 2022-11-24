@@ -17,7 +17,7 @@ from uiuc_apartments import AllAgencies
 import json
 
 
-def to_json(apartment, lat, long):
+def to_json(apartment, long, lat):
     data = apartment.__dict__
     data['latitude'] = lat
     data['longitude'] = long
