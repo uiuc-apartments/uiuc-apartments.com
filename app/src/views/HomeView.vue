@@ -41,8 +41,14 @@ export default {
     onMounted(async () => {
       try {
         const response = await fetch(import.meta.env.VITE_DATA_ENDPOINT_URL)
-        allApartments.value = await response.json()
-        filteredApartments.value = allApartments.value
+        const document = await response.json()
+        const data = Object.entries(document.fields).map(([id, value]) => {
+          var elem = JSON.parse(value.stringValue)
+          elem['id'] = id
+          return elem
+        });
+        allApartments.value = data
+        filteredApartments.value = data
       } catch (err: any) {
         error.value = err.message
       } finally {

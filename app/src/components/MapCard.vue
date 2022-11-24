@@ -29,8 +29,7 @@ export default {
       console.log('newVal', newVal)
       // create new layer
       for (const apartment of newVal) {
-        // TODO: the lat long was flipped in the DB, correcting it here
-        const location = leaflet.latLng(apartment.longitude, apartment.latitude)
+        const location = leaflet.latLng(apartment.latitude, apartment.longitude)
         const description = `<a href="${apartment.link}" target="_blank" rel="noreferrer noopener">${apartment.address} - ${apartment.bedrooms} BR / ${apartment.bathrooms} BA - $${apartment.rent}</a>`
         var marker: leaflet.CircleMarker | undefined;
         marker = placed.get(`${apartment.latitude},${apartment.longitude}`)

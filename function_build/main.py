@@ -3,41 +3,30 @@
 import functions_framework
 
 # This file contains all the code used in the codelab.
-import sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
+# import sqlalchemy
+# from sqlalchemy.ext.declarative import declarative_base
+from google.cloud import firestore
 
+# Add a new document
 import os
 import urllib
 import requests
 
 from uiuc_apartments import AllAgencies
 
-connection_name = "champaign-apartment-aggregator:us-central1:champaign-apartment-postgresql"
-table_name = "apartments"
-db_name = "postgres"
-db_user = "postgres"
-db_password = "postgres"
+import json
 
-# If your database is PostgreSQL, uncomment the following two lines:
-driver_name = 'postgresql+pg8000'
-query_string =  dict({"unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(connection_name)})
 
-Base = declarative_base()
-class Apartments(Base):
-    __tablename__ = 'apartments'
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    address = sqlalchemy.Column(sqlalchemy.String)
-    rent = sqlalchemy.Column(sqlalchemy.Float)
-    bedrooms = sqlalchemy.Column(sqlalchemy.Integer)
-    bathrooms = sqlalchemy.Column(sqlalchemy.Float)
-    link = sqlalchemy.Column(sqlalchemy.String)
-    available_date = sqlalchemy.Column(sqlalchemy.Date)
-    agency = sqlalchemy.Column(sqlalchemy.String)
-    is_studio = sqlalchemy.Column(sqlalchemy.Boolean)
-    latitude = sqlalchemy.Column(sqlalchemy.Float)
-    longitude = sqlalchemy.Column(sqlalchemy.Float)
+def to_json(apartment, lat, long):
+    data = apartment.__dict__
+    data['latitude'] = lat
+    data['longitude'] = long
+    return json.dumps(data)
 
-def get_lat_long(address):
+db = firestore.Client()
+doc_ref = db.collection(u'apartments').document(u'current')
+
+def get_long_lat(address):
     API_KEY = os.environ.get("API_KEY", "XXXX")
     uiuc_min_long = -88.5
     uiuc_max_long = -88
@@ -59,22 +48,6 @@ fuzzyMatch=true&routing=false&worldview=us&access_token={API_KEY}"
     return (0, 0) 
 
 def insert_apartment(_):
-    db = sqlalchemy.create_engine(
-      sqlalchemy.engine.url.URL(
-        drivername=driver_name,
-        username=db_user,
-        password=db_password,
-        database=db_name,
-        #query=query_string,
-      ),
-      pool_size=5,
-      max_overflow=2,
-      pool_timeout=30,
-      pool_recycle=1800
-    )
-    # Create table is not exists
-    Base.metadata.create_all(db, checkfirst=True)
-
     # Get all new Apartments
     all_agencies = AllAgencies
     all_apartments = []
@@ -83,21 +56,15 @@ def insert_apartment(_):
 
 
     try:
-        session = sqlalchemy.orm.Session(db)
-
-        # Delete all Apartments
-        session.query(Apartments).delete()
-
+        id = 0
+        doc = {}
         # Insert all Apartments
         for apt in all_apartments:
-            lat, long = get_lat_long(apt.address)
-            apartment = Apartments(address=apt.address, rent=apt.rent, bedrooms=apt.bedrooms, bathrooms=apt.bathrooms,
-                link=apt.link, available_date=apt.available_date, agency=apt.agency, is_studio=apt.is_studio,
-                latitude=lat, longitude=long)
-            session.add(apartment)
-        
-        # Commit Changes
-        session.commit()
+            long, lat = get_long_lat(apt.address)
+            doc[str(id)] = to_json(apt, long, lat)
+            id += 1
+        # commit to deployment
+        doc_ref.set(doc)        
     except Exception as e:
         return 'Error: {}'.format(str(e))
 
