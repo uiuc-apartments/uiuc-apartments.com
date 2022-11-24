@@ -62,9 +62,9 @@ export default {
   <div class="bg-gray-100 px-4 py-4">
     <div class="">
       <h2 class="text-xl pb-3">Agencies</h2>
-      <fieldset class="space-y-5 pl-2">
+      <fieldset class="pl-2">
         <div
-          class="relative flex items-start"
+          class="relative flex items-center"
           v-for="agency in agencies"
           :key="agency"
         >
@@ -77,8 +77,8 @@ export default {
               v-model="selectedAgencies"
             />
           </div>
-          <div class="ml-3 text-sm">
-            <label :for="agency" class="font-medium text-gray-700">
+          <div class="p-2 ml-3 text-sm">
+            <label :for="agency" class="p-2 font-medium text-gray-700">
               {{ agency }}
             </label>
           </div>

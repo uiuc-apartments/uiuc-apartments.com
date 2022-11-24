@@ -48,7 +48,11 @@ export default {
           return elem
         });
         allApartments.value = data
-        filteredApartments.value = data
+        filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
+          const perPersonA = a.rent / Math.max(1, a.bedrooms)
+          const perPersonB = b.rent / Math.max(1, b.bedrooms)
+          return perPersonA - perPersonB
+        })
       } catch (err: any) {
         error.value = err.message
       } finally {
@@ -74,20 +78,29 @@ export default {
             apartment.bedrooms <= filter.maxBedrooms &&
             apartment.bathrooms >= filter.minBathrooms &&
             apartment.bathrooms <= filter.maxBathrooms &&
-            apartment.rent / (Math.max(1, apartment.bedrooms)) >= filter.minRent &&
-            apartment.rent / (Math.max(1, apartment.bedrooms)) <= filter.maxRent &&
-            (filter.selectedAgencies.length == 0 || filter.selectedAgencies.includes(apartment.agency))
+            apartment.rent / Math.max(1, apartment.bedrooms) >=
+              filter.minRent &&
+            apartment.rent / Math.max(1, apartment.bedrooms) <=
+              filter.maxRent &&
+            (filter.selectedAgencies.length == 0 ||
+              filter.selectedAgencies.includes(apartment.agency))
           )
         })
         .filter((apartment) => {
-          return typeof apartment.available_date === 'string' && filter.dateRange?.length == 2
+          return typeof apartment.available_date === 'string' &&
+            filter.dateRange?.length == 2
             ? dateIsBetween(
-              // remove timezone from date
+                // remove timezone from date
                 new Date(apartment.available_date.replace(' 00:00:00 GMT', '')),
                 filter.dateRange[0],
                 filter.dateRange[1]
               )
             : true
+        })
+        .sort((a, b) => {
+          const perPersonA = a.rent / Math.max(1, a.bedrooms)
+          const perPersonB = b.rent / Math.max(1, b.bedrooms)
+          return perPersonA - perPersonB
         })
     },
   },
@@ -108,7 +121,8 @@ export default {
         <MapCard :apartments="filteredApartments" />
       </div>
       <div class="col-span-1 mx-4">
-        <VirtualList  style="height: 75vh; overflow-y: auto;"
+        <VirtualList
+          style="height: 75vh; overflow-y: auto"
           :data-key="'id'"
           :data-sources="filteredApartments"
           :data-component="apartmentCard"
