@@ -26,7 +26,7 @@ export default {
         map.removeLayer(markersLayer)
       }
 
-      console.log('newVal', newVal)
+      // console.log('newVal', newVal)
       // create new layer
       for (const apartment of newVal) {
         const location = leaflet.latLng(apartment.latitude, apartment.longitude)
@@ -50,7 +50,7 @@ export default {
 
       // add new layer
       markersLayer.addTo(map)
-      console.log(map)
+      // console.log(map)
     },
   },
   mounted() {

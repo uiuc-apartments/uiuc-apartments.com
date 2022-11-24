@@ -27,7 +27,7 @@ export default {
         dateRange: dateRange.value,
         selectedAgencies: selectedAgencies.value,
       }
-      console.log('filtering', filter)
+      // console.log('filtering', filter)
       context.emit('filter-apartments', filter)
     }
 

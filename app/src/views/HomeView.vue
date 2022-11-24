@@ -39,6 +39,7 @@ export default {
     const apartmentCard = ApartmentCard
 
     onMounted(async () => {
+      
       try {
         const response = await fetch(import.meta.env.VITE_DATA_ENDPOINT_URL)
         const document = await response.json()
@@ -70,7 +71,7 @@ export default {
   },
   methods: {
     filterApartments(filter: Filter) {
-      console.log('received event', filter)
+      // console.log('received event', filter)
       this.filteredApartments = this.allApartments
         .filter((apartment) => {
           return (
@@ -91,7 +92,7 @@ export default {
             filter.dateRange?.length == 2
             ? dateIsBetween(
                 // remove timezone from date
-                new Date(apartment.available_date.replace(' 00:00:00 GMT', '')),
+                new Date(apartment.available_date.replace(' 00:00:00 GMT', '') + 'GMT-0500'),
                 filter.dateRange[0],
                 filter.dateRange[1]
               )
