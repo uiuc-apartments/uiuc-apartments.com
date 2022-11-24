@@ -33,7 +33,7 @@ export default {
         const location = leaflet.latLng(apartment.longitude, apartment.latitude)
         const description = `${apartment.address} - ${apartment.bedrooms} BR / ${apartment.bathrooms} BA - $${apartment.rent}`
         var marker: leaflet.CircleMarker | undefined;
-        marker = placed.get(apartment.address)
+        marker = placed.get(`${apartment.latitude},${apartment.longitude}`)
         if(marker !== undefined) {
           var currentPopup = marker.getPopup()?.getContent()
           marker.setPopupContent(currentPopup + "<br>" + description)
@@ -45,7 +45,7 @@ export default {
             .bindPopup(description)
             markersLayer.addLayer(marker)
         }
-        placed.set(apartment.address, marker);
+        placed.set(`${apartment.latitude},${apartment.longitude}`, marker);
       }
       // console.log('markersLayer', markersLayer)
 

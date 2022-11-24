@@ -22,6 +22,7 @@
     "uuid": "^9.0.0",
     "vue": "^3.2.41",
     "vue-router": "^4.1.5",
+    "vue3-virtual-scroll-list": "^0.2.1",
     "vuetify": "^3.0.0-beta.0",
     "webfontloader": "^1.0.0"
   },

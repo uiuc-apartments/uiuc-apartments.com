@@ -3,6 +3,7 @@ import ApartmentCard from '../components/ApartmentCard.vue'
 import MapCard from '../components/MapCard.vue'
 import FilterControls from '../components/FilterControls.vue'
 import { onMounted, type Ref } from 'vue'
+import VirtualList from 'vue3-virtual-scroll-list'
 import { ref } from 'vue'
 import type { Apartment, Filter } from '../types'
 
@@ -19,6 +20,7 @@ export default {
     ApartmentCard,
     FilterControls,
     MapCard,
+    VirtualList,
   },
   computed: {
     agencies(): Array<string> {
@@ -34,6 +36,7 @@ export default {
     const filteredApartments: Ref<Array<Apartment>> = ref([])
     const loading = ref(true)
     const error = ref(null)
+    const apartmentCard = ApartmentCard
 
     onMounted(async () => {
       console.log(import.meta.env)
@@ -48,6 +51,7 @@ export default {
     })
 
     return {
+      apartmentCard,
       allApartments,
       filteredApartments,
       loading,
@@ -64,8 +68,8 @@ export default {
             apartment.bedrooms <= filter.maxBedrooms &&
             apartment.bathrooms >= filter.minBathrooms &&
             apartment.bathrooms <= filter.maxBathrooms &&
-            apartment.rent >= filter.minRent &&
-            apartment.rent <= filter.maxRent &&
+            apartment.rent / (Math.max(1, apartment.bedrooms)) >= filter.minRent &&
+            apartment.rent / (Math.max(1, apartment.bedrooms)) <= filter.maxRent &&
             filter.selectedAgencies.includes(apartment.agency)
           )
         })
@@ -98,11 +102,16 @@ export default {
         <MapCard :apartments="filteredApartments" />
       </div>
       <div class="col-span-1">
-        <ApartmentCard
+        <VirtualList  style="height: 360px; overflow-y: auto;"
+          :data-key="'id'"
+          :data-sources="filteredApartments"
+          :data-component="apartmentCard"
+        />
+        <!-- <ApartmentCard
           v-for="apartment in filteredApartments"
           :key="apartment.id"
           :apartment="apartment"
-        />
+        /> -->
       </div>
     </div>
   </main>
