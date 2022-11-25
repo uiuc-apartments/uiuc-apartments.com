@@ -41,18 +41,19 @@ export default {
     onMounted(async () => {
       
       try {
-        const response = await fetch(import.meta.env.VITE_DATA_ENDPOINT_URL)
-        const document = await response.json()
-        const data = Object.entries(document.fields).map(([id, value]) => {
-          var elem = JSON.parse(value.stringValue)
-          elem['id'] = id
-          return elem
-        });
-        allApartments.value = data
-        filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
-          const perPersonA = a.rent / Math.max(1, a.bedrooms)
-          const perPersonB = b.rent / Math.max(1, b.bedrooms)
-          return perPersonA - perPersonB
+        fetch(import.meta.env.VITE_DATA_ENDPOINT_URL).then(response => response.json()).then((document: any) => {
+            return Object.entries(document.fields).map(([id, value]) => {
+              var elem = JSON.parse(value.stringValue)
+              elem['id'] = id
+              return elem
+            })
+        }).then(data => {
+          allApartments.value = data
+          filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
+            const perPersonA = a.rent / Math.max(1, a.bedrooms)
+            const perPersonB = b.rent / Math.max(1, b.bedrooms)
+            return perPersonA - perPersonB
+          })
         })
       } catch (err: any) {
         error.value = err.message
