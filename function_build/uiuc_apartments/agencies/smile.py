@@ -15,7 +15,7 @@ class Smile(AgencyBase):
         apartment_list = json.loads(contents['value'])
         for apartment in apartment_list:
             details = apartment['data']
-            address = details['address_address1']
+            address = details['full_address']
             available_date = details.get('available_date', None)
             bathrooms = details['bathrooms']
             bedrooms = details['bedrooms']

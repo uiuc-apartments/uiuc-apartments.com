@@ -23,7 +23,7 @@ class JSJ(AgencyBase):
             else:
                 is_studio = False
             bathrooms = float(apartment['bathrooms'])
-            address = apartment['address_1']
+            address = apartment['address_1'] + ', ' + apartment.get('city', '') + ', ' + apartment.get('state', '')
             link = 'https://jsjmanagement.com/on-campus/listing/' + \
                 apartment['slug']
             price = float(apartment['price'].replace(',', ''))

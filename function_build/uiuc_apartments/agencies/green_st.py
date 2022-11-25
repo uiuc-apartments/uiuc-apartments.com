@@ -11,6 +11,7 @@ class GreenStreetRealty(AgencyBase):
         res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded'}, data={
                             'query': '/'.join(self.terms), 'show_map': False}).text
         soup = BeautifulSoup(res, 'html.parser')
+        # print(res)
         apartments = []
         # get all divs with class property-item-data
         for div in soup.find_all('div', class_='property-item-data'):

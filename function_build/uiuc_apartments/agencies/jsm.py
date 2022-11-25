@@ -8,6 +8,8 @@ class JSM(AgencyBase):
     name = "JSM"
 
     def get_all(self):
+        self.base_url = 'https://jsmliving.com'
+        
         apartments = []
         page = requests.get(self.url).text
         soup = BeautifulSoup(page, 'html.parser')
@@ -18,7 +20,7 @@ class JSM(AgencyBase):
             # Get the address as the a link with the hreflang="en" attribute
             address = article.find('a', hreflang='en').text.strip()
             # Get the link as the a link with the class="call-to-action" attribute
-            link = self.url + \
+            link = self.base_url + \
                 article.find('a', class_='call-to-action')['href']
             # Get the first div with class="unit__card-rent"
             # Get upper price range

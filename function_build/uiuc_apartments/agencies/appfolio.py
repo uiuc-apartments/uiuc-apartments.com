@@ -32,7 +32,12 @@ class AppFolioBase(AgencyBase):
 
             rent = int(lookup['RENT'].replace('$', '').replace(',', ''))
             # some listings do not have bed / bath provided
-            [rawBed, rawBath] = lookup.get('Bed / Bath', '0 / 0').split('/ ')
+            resp = lookup.get('Bed / Bath', '0 / 0').split('/ ')
+            if len(resp) == 2:
+                rawBed, rawBath = resp 
+            else:
+                rawBed = resp[0]
+                rawBath = '0'
             rawBed = rawBed.split(' ')[0].strip()
             if rawBed == 'Studio':
                 is_studio = True
@@ -64,7 +69,7 @@ class CPM(AppFolioBase):
 class ChampaignCountyReality(AppFolioBase):
     def __init__(self):
         url = 'https://ccr.appfolio.com/listings'
-        name = "Champaign County Reality"
+        name = "Champaign County Realty"
         super().__init__(url, name)
 
 
@@ -77,7 +82,7 @@ class Weiner(AppFolioBase):
 
 class Ramshaw(AppFolioBase):
     def __init__(self):
-        url = 'https://ram.appfolio.com/'
+        url = 'https://ram.appfolio.com/listings'
         name = "Ramshaw Real Estate"
         super().__init__(url, name)
 
