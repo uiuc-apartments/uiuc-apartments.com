@@ -46,6 +46,14 @@ class AppFolioBase(AgencyBase):
                 is_studio = False
                 bed = int(rawBed)
             bath = float(rawBath.split(' ')[0].strip())
+            
+            # Correct for individual leases
+            title = div.find('h2', class_='js-listing-title').text
+            description = div.find('p', class_='js-listing-description').text
+            text_blob = title.lower() + description.lower()
+            if 'individual' in text_blob:
+                rent = rent * bed
+
             available_date = lookup.get('Available', None)
             if available_date:
                 available_date = available_date.strip().lower()

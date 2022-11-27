@@ -6,6 +6,7 @@ import { onMounted, type Ref } from 'vue'
 import VirtualList from 'vue3-virtual-scroll-list'
 import { ref } from 'vue'
 import type { Apartment, Filter } from '../types'
+import leaflet from 'leaflet'
 
 function dateIsBetween(date: Date, start: Date, end: Date) {
   // create new date without the time component
@@ -30,14 +31,25 @@ export default {
         ),
       ]
     },
+    boundedFilteredApartments(): Apartment[] {
+      return this.filteredApartments.filter((apartment: Apartment) => {
+        return (
+          apartment.latitude >= this.bounds.getSouthWest().lat &&
+          apartment.latitude <= this.bounds.getNorthEast().lat &&
+          apartment.longitude >= this.bounds.getSouthWest().lng &&
+          apartment.longitude <= this.bounds.getNorthEast().lng
+        )
+      })
+    },
   },
   setup() {
     const allApartments: Ref<Array<Apartment>> = ref([])
     const filteredApartments: Ref<Array<Apartment>> = ref([])
+    const boundedFilteredApartments: Ref<Array<Apartment>> = ref([])
     const loading = ref(true)
     const error = ref(null)
     const apartmentCard = ApartmentCard
-
+    const bounds: Ref<leaflet.LatLngBounds> = ref(leaflet.latLngBounds(new leaflet.LatLng(0, 0), new leaflet.LatLng(0, 0)))
     onMounted(async () => {
       
       try {
@@ -66,6 +78,7 @@ export default {
       apartmentCard,
       allApartments,
       filteredApartments,
+      bounds,
       loading,
       error,
     }
@@ -104,7 +117,7 @@ export default {
           const perPersonB = b.rent / Math.max(1, b.bedrooms)
           return perPersonA - perPersonB
         })
-    },
+    },    
   },
 }
 </script>
@@ -120,13 +133,13 @@ export default {
         />
       </div>
       <div class="col-span-2 m-4">
-        <MapCard :apartments="filteredApartments" />
+        <MapCard v-model:bounds="bounds" :apartments="filteredApartments" />
       </div>
       <div class="col-span-1 mx-4">
         <VirtualList
           style="height: 75vh; overflow-y: auto"
           :data-key="'id'"
-          :data-sources="filteredApartments"
+          :data-sources="boundedFilteredApartments"
           :data-component="apartmentCard"
         />
         <!-- <ApartmentCard
