@@ -29,7 +29,7 @@ doc_ref = db.collection(u'apartments').document(u'current')
 def get_long_lat(address):
     # Extremely cursed but it works
     if 'urbana' not in address.lower() or 'champaign' not in address.lower:
-        adress += ", Champaign"
+        address += ", Champaign"
     API_KEY = os.environ.get("API_KEY", "XXXX")
     uiuc_min_long = -88.5
     uiuc_max_long = -88
