@@ -79,6 +79,9 @@ class Roland(AgencyBase):
             rent = max([int(price) for price in prices])
             rent *= int(bedrooms)
 
+            # cursed but working hack
+            if 'champaign' not in address.lower() or 'urbana' not in address.lower():
+                address += ", Champaign, IL"
             apartments.append(Apartment(address, rent, int(
                 bedrooms), 0, url, available_date, self.name, is_studio))
 
