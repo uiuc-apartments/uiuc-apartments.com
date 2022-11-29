@@ -4,7 +4,7 @@ import type { Filter } from '../types'
 
 export default {
   props: ['agencies'],
-  emits: ['filter-apartments'],
+  emits: ['update:filter-apartments'],
   watch: {
     agencies(val) {
       this.selectedAgencies = val
@@ -32,8 +32,7 @@ export default {
         dateRange: dateRange.value,
         selectedAgencies: selectedAgencies.value,
       }
-      // console.log('filtering', filter)
-      context.emit('filter-apartments', filter)
+      context.emit('update:filter-apartments', filter)
     }
 
     watch(
@@ -207,6 +206,10 @@ export default {
       </div>
     </div>
     <Datepicker v-model="dateRange" range :enableTimePicker="false" />
+    <p class="mt-4 text-sm text-gray-700">
+      Use the shape buttons below the zoom controls on the map to select
+      apartments within a region.
+    </p>
   </div>
 </template>
 <style scoped></style>
