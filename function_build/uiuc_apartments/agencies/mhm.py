@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 import re
@@ -9,8 +8,7 @@ class MHM(AgencyBase):
 
     def get_all(self):
         apartments = []
-        page = requests.get(self.url, headers={
-                            'User-Agent': 'api-scraper'}).text
+        page = self.session.get(self.url).text
         soup = BeautifulSoup(page, 'html.parser')
         # print(page)
         # Get all divs with class="propgridc"

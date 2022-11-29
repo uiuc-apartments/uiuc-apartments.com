@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 import re
@@ -9,7 +8,7 @@ class Roland(AgencyBase):
 
     def get_all(self):
         apartments = []
-        page = requests.get(self.url).text
+        page = self.session.get(self.url).text
         soup = BeautifulSoup(page, 'html.parser')
         # Get the parent of the link with href=/on-campus-apartments.html
         parent = soup.find('a', href='/on-campus-apartments.html').parent
@@ -36,7 +35,7 @@ class Roland(AgencyBase):
 
         for [link, fallback_bedrooms, is_studio] in allLinks:
             url = self.url + link
-            page = requests.get(url).text
+            page = self.session.get(url).text
             soup = BeautifulSoup(page, 'html.parser')
             # Get the address as the h2 tag with class wsite-content-title as the first child of a div with id="wsite-content"
             root = soup.find('div', id='wsite-content')

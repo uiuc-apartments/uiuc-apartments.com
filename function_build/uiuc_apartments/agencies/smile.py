@@ -1,4 +1,3 @@
-import requests
 from uiuc_apartments.shared import AgencyBase, Apartment
 import json
 
@@ -10,8 +9,7 @@ class Smile(AgencyBase):
         apartments = []
         # request with user agent
 
-        contents = requests.get(
-            self.url, headers={'User-Agent': 'api-scraper'}).json()
+        contents = self.session.get(self.url).json()
         apartment_list = json.loads(contents['value'])
         for apartment in apartment_list:
             details = apartment['data']

@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 
@@ -11,7 +10,7 @@ class JSM(AgencyBase):
         self.base_url = 'https://jsmliving.com'
         
         apartments = []
-        page = requests.get(self.url).text
+        page = self.session.get(self.url).text
         soup = BeautifulSoup(page, 'html.parser')
         # Get all article elements with the role="article" attribute
         articles = soup.find_all('article', role='article')

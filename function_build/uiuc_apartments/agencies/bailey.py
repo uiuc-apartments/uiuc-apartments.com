@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 
@@ -8,7 +7,7 @@ class Bailey(AgencyBase):
 
     def get_all(self):
         apartments = []
-        res = requests.get(self.url).text
+        res = self.session.get(self.url).text
         soup = BeautifulSoup(res, 'html.parser')
         # Get each row in the table with class="tablepress-2", using thead as dictionary keys
         table = soup.find('table', id='tablepress-2')

@@ -14,6 +14,7 @@ from .american_campus import *
 
 
 Individual = [
+  # UniversityGroup(),
   JSM(),
   MHM(),
   Smile(),
@@ -23,8 +24,7 @@ Individual = [
   Bankier(),
   Wampler(),
   JSJ(),
-  Bailey(),
-  UniversityGroup()
+  Bailey()
 ]
 
 AllAgencies = AppFolio + AmericanCampus + Individual

@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 
@@ -9,12 +8,12 @@ class Wampler(AgencyBase):
     def get_all(self):
         apartments = []
         # Get all links with class="more-link"
-        res = requests.get(self.url).text
+        res = self.session.get(self.url).text
         soup = BeautifulSoup(res, 'html.parser')
         for a in soup.find_all('a', class_='more-link'):
             # Get soup
             link = a['href']
-            res = requests.get(link).text
+            res = self.session.get(link).text
             soup = BeautifulSoup(res, 'html.parser')
             # Get h3 with class="listing-address"
             address = soup.find('h3', class_='listing-address').text.strip()

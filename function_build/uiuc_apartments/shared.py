@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+import requests
 
 class Apartment:
     def __init__(self, address, rent, bedrooms, bathrooms, link, available_date, agency, is_studio):
@@ -21,6 +21,9 @@ class Apartment:
 class AgencyBase(ABC):
     name: str
     url: str
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({'User-Agent': 'https://uiuc-apartments.com - crawler'})
 
     @abstractmethod
     def get_all(self):

@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 
@@ -8,7 +7,7 @@ class GreenStreetRealty(AgencyBase):
     terms = ['Available August 2023']
 
     def get_all(self):
-        res = requests.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded'}, data={
+        res = self.session.post(self.url, headers={'content-type': 'application/x-www-form-urlencoded'}, data={
                             'query': '/'.join(self.terms), 'show_map': False}).text
         soup = BeautifulSoup(res, 'html.parser')
         # print(res)

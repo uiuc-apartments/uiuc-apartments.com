@@ -1,4 +1,3 @@
-import requests
 from uiuc_apartments.shared import AgencyBase, Apartment
 import re
 
@@ -15,7 +14,7 @@ class AmericanCampusBase(AgencyBase):
     def get_all(self):
         apartments = []
         # print(self.api_url + self.fall_term)
-        contents = requests.get(self.api_url + self.fall_term).json()
+        contents = self.session.get(self.api_url + self.fall_term).json()
         location_lookup = {}
         for search_filter in contents['Filters']:
             if search_filter["Label"] != "Location":
@@ -45,7 +44,7 @@ class AmericanCampusBase(AgencyBase):
 
             detail_url = 'https://www.americancampus.com' + \
                 apartment['DetailUrl']
-            details = requests.get(detail_url).json()
+            details = self.session.get(detail_url).json()
             slug = details['UrlSlug']
             link = self.url + slug
             rent = price * bed

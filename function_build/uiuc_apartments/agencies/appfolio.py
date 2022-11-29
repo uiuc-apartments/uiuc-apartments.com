@@ -1,6 +1,5 @@
 from uiuc_apartments.shared import AgencyBase, Apartment
 from bs4 import BeautifulSoup
-import requests
 from datetime import datetime
 
 
@@ -13,7 +12,7 @@ class AppFolioBase(AgencyBase):
 
     def get_all(self):
         apartments = []
-        contents = requests.get(self.url).text
+        contents = self.session.get(self.url).text
         soup = BeautifulSoup(contents, 'html.parser')
         # get all divs with class listing-item__body
         divs = soup.find_all('div', class_='listing-item__body')

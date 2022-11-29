@@ -1,4 +1,3 @@
-import requests
 import json
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
@@ -9,7 +8,7 @@ class JSJ(AgencyBase):
 
     def get_all(self):
         apartments = []
-        res = requests.get(self.url).text
+        res = self.session.get(self.url).text
         soup = BeautifulSoup(res, 'html.parser')
         # Get script with type="application/json" and id="search-form-config"
         script = soup.find('script', type='application/json',

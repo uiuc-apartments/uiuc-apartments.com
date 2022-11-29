@@ -1,4 +1,3 @@
-import requests
 from uiuc_apartments.shared import AgencyBase, Apartment
 import json
 
@@ -18,7 +17,7 @@ class Smith(AgencyBase):
     def get_all(self):
         # Contains property data (rent, bed, bath, etc)
         # Note that this only has one entry per "unique" unit type.
-        raw = requests.get(self.url).text
+        raw = self.session.get(self.url).text
         details_json = self.clean_json(raw)
         details = {}
         for d in details_json:
@@ -27,7 +26,7 @@ class Smith(AgencyBase):
 
         # We have to iterate through the json from the "rmwbAll" version of the url
         # to get all the available units for each unit type.
-        res = requests.get(self.url.replace('rmwbDefault', 'rmwbAll')).text
+        res = self.session.get(self.url.replace('rmwbDefault', 'rmwbAll')).text
         data = self.clean_json(res)
 
         apartments = []

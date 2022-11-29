@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 import re
@@ -18,8 +17,8 @@ class UniversityGroup(AgencyBase):
             #     'random_order': 0,
             #     'roommate_check': 'N'
             # }
-        res = requests.post(self.url, headers={
-                            'user-agent': 'api-scraper'}).text
+        res = self.session.post(self.url).text
+        print(res)
         if res.strip() == 'No properties listed.' or '500 Error' in res:
             return []
         soup = BeautifulSoup(res, 'html.parser')
@@ -31,9 +30,8 @@ class UniversityGroup(AgencyBase):
                 continue    
             # Get the bs4 soup of the link
             link = a['href']
-            res = requests.get(
-                link, headers={'user-agent': 'api-scraper'}).text
-            # print(res)
+            res = self.session.get(link).text
+            print(res)
             soup = BeautifulSoup(res, 'html.parser')
             # Get the first h2 tag under the div with class prop_detil_rgt
             # print('====', link)

@@ -1,4 +1,3 @@
-import requests
 from bs4 import BeautifulSoup
 from uiuc_apartments.shared import AgencyBase, Apartment
 import re
@@ -8,7 +7,7 @@ class Bankier(AgencyBase):
     name = "Bankier Properties"
 
     def get_all(self):
-        res = requests.get(self.url).text
+        res = self.session.get(self.url).text
         soup = BeautifulSoup(res, 'html.parser')
         # Get all a tags with the title="View Property Units"
         apartments = []
@@ -17,14 +16,14 @@ class Bankier(AgencyBase):
             address = a.find('span', class_='title').text
             # Get the bs4 soup of the link
             link = self.url + a['href']
-            res = requests.get(link).text
+            res = self.session.get(link).text
             soup = BeautifulSoup(res, 'html.parser')
             # Get all a tags with the title="View Unit Details"
             for a_unit in soup.find_all('a', title='View Unit Details'):
                 # Get the bs4 soup of the link
                 link = self.url + a_unit['href']
                 # print(link)
-                res = requests.get(link).text
+                res = self.session.get(link).text
                 soup = BeautifulSoup(res, 'html.parser')
                 # Get the div with class="info"
                 info = soup.find('div', class_='info')
