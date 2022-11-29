@@ -28,8 +28,8 @@ doc_ref = db.collection(u'apartments').document(u'current')
 
 def get_long_lat(address):
     # Extremely cursed but it works
-    if 'urbana' not in address.lower() or 'champaign' not in address.lower:
-        adress += ", Champaign"
+    if 'urbana' not in address.lower() or 'champaign' not in address.lower():
+        address += ", Champaign"
     API_KEY = os.environ.get("API_KEY", "XXXX")
     uiuc_min_long = -88.5
     uiuc_max_long = -88
@@ -92,7 +92,9 @@ def insert_apartment(_):
         doc_ref.set(doc)    
         # print(doc)    
     except Exception as e:
-        return 'Error: {}'.format(str(e))
+        import traceback
+        print(traceback.format_exc())
+        return 'Error: {}'.format(str(e)), 500
 
     return 'ok'
     

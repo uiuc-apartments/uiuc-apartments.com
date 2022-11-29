@@ -16,6 +16,17 @@ function dateIsBetween(date: Date, start: Date, end: Date) {
   return d >= s && d <= e
 }
 
+function getData() {
+  return fetch(import.meta.env.VITE_DATA_ENDPOINT_URL).then(response => response.json()).then((document: any) => {
+    localStorage.last_stored = document.updateTime;
+    return Object.entries(document.fields).map(([id, value]) => {
+      var elem = JSON.parse(value.stringValue)
+      elem['id'] = id
+      return elem
+    })
+  })
+}
+
 export default {
   components: {
     ApartmentCard,
@@ -52,26 +63,44 @@ export default {
     const bounds: Ref<leaflet.LatLngBounds> = ref(leaflet.latLngBounds(new leaflet.LatLng(0, 0), new leaflet.LatLng(0, 0)))
     onMounted(async () => {
       
-      try {
-        fetch(import.meta.env.VITE_DATA_ENDPOINT_URL).then(response => response.json()).then((document: any) => {
-            return Object.entries(document.fields).map(([id, value]) => {
-              var elem = JSON.parse(value.stringValue)
-              elem['id'] = id
-              return elem
+        if(localStorage.data && localStorage.last_stored) {
+          const day = 1000 * 60 * 60 * 24;
+          const day_ago = Date.now() - day;
+          if(new Date(localStorage.last_stored) < day_ago) {
+            getData().then(data => {
+              localStorage.data = JSON.stringify(data);
+              allApartments.value = data
+              filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
+                const perPersonA = a.rent / Math.max(1, a.bedrooms)
+                const perPersonB = b.rent / Math.max(1, b.bedrooms)
+                return perPersonA - perPersonB
+              })
             })
-        }).then(data => {
-          allApartments.value = data
-          filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
-            const perPersonA = a.rent / Math.max(1, a.bedrooms)
-            const perPersonB = b.rent / Math.max(1, b.bedrooms)
-            return perPersonA - perPersonB
+          } else {
+            allApartments.value = JSON.parse(localStorage.data)
+            filteredApartments.value = allApartments.value.sort((a: Apartment, b: Apartment) => {
+              const perPersonA = a.rent / Math.max(1, a.bedrooms)
+              const perPersonB = b.rent / Math.max(1, b.bedrooms)
+              return perPersonA - perPersonB
+            })
+          }
+        } else {
+          getData().then(data => {
+            localStorage.data = JSON.stringify(data);
+            allApartments.value = data
+            filteredApartments.value = data.sort((a: Apartment, b: Apartment) => {
+              const perPersonA = a.rent / Math.max(1, a.bedrooms)
+              const perPersonB = b.rent / Math.max(1, b.bedrooms)
+              return perPersonA - perPersonB
+            })
           })
-        })
-      } catch (err: any) {
-        error.value = err.message
-      } finally {
-        loading.value = false
-      }
+        }
+        
+      // } catch (err: any) {
+      //   error.value = err.message
+      // } finally {
+      //   loading.value = false
+      // }
     })
 
     return {
