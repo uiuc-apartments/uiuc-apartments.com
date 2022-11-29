@@ -113,7 +113,7 @@ export default {
     let editableLayers = new L.FeatureGroup()
     map.addLayer(editableLayers)
 
-    const options = {
+    const options: L.Control.DrawConstructorOptions = {
       draw: {
         polyline: false,
         marker: false,

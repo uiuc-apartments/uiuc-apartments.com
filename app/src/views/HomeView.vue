@@ -5,7 +5,7 @@ import FilterControls from '../components/FilterControls.vue'
 import { onMounted, type Ref } from 'vue'
 import VirtualList from 'vue3-virtual-scroll-list'
 import { ref } from 'vue'
-import type { Apartment } from '../types'
+import type { Apartment, Filter } from '../types'
 import leaflet from 'leaflet'
 
 function dateIsBetween(date: Date, start: Date, end: Date) {
@@ -16,7 +16,7 @@ function dateIsBetween(date: Date, start: Date, end: Date) {
   return d >= s && d <= e
 }
 
-function getData() {
+function getData(): Promise<Apartment[]> {
   return fetch(import.meta.env.VITE_DATA_ENDPOINT_URL)
     .then((response) => response.json())
     .then((document: any) => {
@@ -30,7 +30,7 @@ function getData() {
 }
 
 // source: https://stackoverflow.com/a/42532563
-function isLatLongInsidePolygon(x, y, poly) {
+function isLatLongInsidePolygon(x: number, y: number, poly) {
   var inside = false
   for (var ii = 0; ii < poly.getLatLngs().length; ii++) {
     var polyPoints = poly.getLatLngs()[ii]
@@ -95,7 +95,7 @@ export default {
         return false
       })
     },
-    filteredApartments() {
+    filteredApartments(): Apartment[] {
       // console.log('received event', filter)
       return this.shapesFilteredApartments
         .filter((apartment) => {
@@ -143,7 +143,7 @@ export default {
       leaflet.latLngBounds(new leaflet.LatLng(0, 0), new leaflet.LatLng(0, 0))
     )
     const filterShapes: Ref<Array<L.Draw.PolyLine>> = ref([])
-    const filter: Ref<Filter> = ref([])
+    const filter: Ref<Filter> = ref({} as Filter)
     onMounted(async () => {
       if (localStorage.data && localStorage.last_stored) {
         const day = 1000 * 60 * 60 * 24
