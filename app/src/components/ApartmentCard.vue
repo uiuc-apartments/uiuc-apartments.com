@@ -7,6 +7,12 @@ export default {
       required: true,
     },
   },
+  methods: {
+    apartmentHover(apartment: Apartment) {
+      this.$parent?.$parent?.$emit('apartment-hover', apartment)
+    },
+  },
+  emits: ['apartment-hover'],
   computed: {
     pricePerPerson(): string {
       // show the price per person rounded to 2 decimal places only if it is not an integer
@@ -26,6 +32,9 @@ export default {
 
   <div
     class="my-3 relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400"
+    :key="source.link"
+    @mouseover="apartmentHover(source)"
+    @mouseleave="apartmentHover({} as Apartment)"
   >
     <div class="min-w-0 flex-1">
       <a

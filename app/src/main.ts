@@ -8,8 +8,11 @@ import {
   faSignHanging,
   faLocationPin,
   faDollarSign,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons'
-
+import {
+  faGithub,
+} from '@fortawesome/free-brands-svg-icons'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 
@@ -19,7 +22,7 @@ import router from './router'
 import './assets/main.css'
 import './index.css'
 
-library.add(faBath, faBed, faHome, faSignHanging, faLocationPin, faDollarSign)
+library.add(faBath, faBed, faHome, faSignHanging, faLocationPin, faDollarSign, faChevronDown, faGithub)
 
 const app = createApp(App)
 

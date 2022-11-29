@@ -5,7 +5,11 @@ import type { Filter } from '../types'
 export default {
   props: ['agencies'],
   emits: ['filter-apartments'],
-
+  watch: {
+    agencies(val) {
+      this.selectedAgencies = val
+    }
+  },
   setup(props: any, context: any) {
     const minBedrooms = ref(1)
     const maxBedrooms = ref(5)
@@ -13,7 +17,8 @@ export default {
     const maxBathrooms = ref(5)
     const minRent = ref(0)
     const maxRent = ref(10000)
-    const selectedAgencies = ref(props.agencies)
+    const accordionOpen = ref(true)
+    const selectedAgencies = ref([])
     const dateRange = ref([new Date(2023, 7, 1), new Date(2023, 8, 31)])
 
     const filterApartments = () => {
@@ -54,6 +59,7 @@ export default {
       minRent,
       maxRent,
       selectedAgencies,
+      accordionOpen
     }
   },
 }
@@ -61,8 +67,11 @@ export default {
 <template>
   <div class="bg-gray-100 px-4 py-4">
     <div class="">
-      <h2 class="text-xl pb-3">Agencies</h2>
-      <fieldset class="pl-2">
+      <h2 class="text-xl pb-3 cursor-pointer" @click="accordionOpen = !accordionOpen">
+        Agencies
+        <font-awesome-icon icon="chevron-down" class="float-right" :class="{'transform rotate-180': accordionOpen}" />
+      </h2>
+      <fieldset class="pl-2" v-show="accordionOpen">
         <div
           class="relative flex items-center"
           v-for="agency in agencies"
@@ -84,6 +93,7 @@ export default {
           </div>
         </div>
       </fieldset>
+      <hr>
     </div>
     <div class="my-4 flex flex-row space-x-6">
       <!-- min to max bathrooms -->

@@ -45,7 +45,7 @@ export default {
   setup() {
     const allApartments: Ref<Array<Apartment>> = ref([])
     const filteredApartments: Ref<Array<Apartment>> = ref([])
-    const boundedFilteredApartments: Ref<Array<Apartment>> = ref([])
+    const selectedApartment: Ref<Apartment> = ref({} as Apartment)
     const loading = ref(true)
     const error = ref(null)
     const apartmentCard = ApartmentCard
@@ -76,6 +76,7 @@ export default {
 
     return {
       apartmentCard,
+      selectedApartment,
       allApartments,
       filteredApartments,
       bounds,
@@ -117,7 +118,10 @@ export default {
           const perPersonB = b.rent / Math.max(1, b.bedrooms)
           return perPersonA - perPersonB
         })
-    },    
+    },
+    onApartmentHover(apartment: Apartment) {
+      this.selectedApartment = apartment
+    }, 
   },
 }
 </script>
@@ -133,7 +137,7 @@ export default {
         />
       </div>
       <div class="col-span-2 m-4">
-        <MapCard v-model:bounds="bounds" :apartments="filteredApartments" />
+        <MapCard v-model:bounds="bounds" :apartments="filteredApartments" :selectedApartment="selectedApartment" />
       </div>
       <div class="col-span-1 mx-4">
         <VirtualList
@@ -141,6 +145,7 @@ export default {
           :data-key="'id'"
           :data-sources="boundedFilteredApartments"
           :data-component="apartmentCard"
+          @apartment-hover="onApartmentHover"
         />
         <!-- <ApartmentCard
           v-for="apartment in filteredApartments"
