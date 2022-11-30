@@ -50,7 +50,8 @@ class AppFolioBase(AgencyBase):
             title = div.find('h2', class_='js-listing-title').text
             description = div.find('p', class_='js-listing-description').text
             text_blob = title.lower() + description.lower()
-            if 'individual' in text_blob:
+            # arbitrary cutoff to fix incorrectly priced ramshaw listings
+            if 'individual' in text_blob or (bed > 1 and rent < 600):
                 rent = rent * bed
 
             available_date = lookup.get('Available', None)
