@@ -119,7 +119,7 @@ export default {
                 // remove timezone from date
                 new Date(
                   apartment.available_date.replace(' 00:00:00 GMT', '') +
-                    'GMT-0500'
+                    ' GMT-0500'
                 ),
                 this.filter.dateRange[0],
                 this.filter.dateRange[1]
