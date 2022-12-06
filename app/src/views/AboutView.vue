@@ -22,7 +22,7 @@
             class="w-60 h-60 rounded-full mx-auto" />
           <div class="text-center pt-10">
             <h3 class="text-3xl">Hassam</h3>
-            <p><a href="https://github.com/heasummmn"><font-awesome-icon icon="fa-brands fa-github" /> Github </a></p>
+            <p><a href="https://github.com/heasummn"><font-awesome-icon icon="fa-brands fa-github" /> Github </a></p>
           </div>
         </div>
         <div class="rounded shadow px-5 mx-10 flex-grow">
