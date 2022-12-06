@@ -14,7 +14,7 @@ from .american_campus import *
 
 
 Individual = [
-  # UniversityGroup(),
+  UniversityGroup(),
   JSM(),
   MHM(),
   Smile(),
