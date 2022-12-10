@@ -102,11 +102,10 @@ export default {
       .setView([40.109, -88.227], 13) // illini union
     // add tile layers
     L.tileLayer(
-      'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=yvUGw3ndr6zJmLiXqkDi',
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {
-        maxZoom: 18,
-        attribution:
-          '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+        maxZoom: 19,
+        attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>',
       }
     ).addTo(map)
 
